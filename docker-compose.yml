@@ -109,6 +109,7 @@ services:
       - ./exports/postgres-tool-export.json:/app/exports/postgres-tool-export.json:ro
       - ./exports/models-export-dev.json:/app/exports/models-export.json:ro
       - ./exports/config-export-dev.json:/app/exports/config-export.json:ro
+      - ./exports/filter-export.json:/app/exports/filter-export.json:ro
       - ./import_tools.py:/app/import_tools.py:ro
       - ./start_with_tools.sh:/app/start_with_tools.sh:ro
       - ./system_prompt.md:/app/system_prompt.md:ro

@@ -18,6 +18,7 @@ Adapted for docker environment with:
 """
 
 import json
+
 from typing import Callable, Any
 import re
 import httpx
@@ -759,20 +760,54 @@ class Tools:
                     cur.execute(safe_query)
                     rows = cur.fetchall()
 
-                    # Get column names for formatting results
+                    # Get column names for formatting original_results
                     if cur.description is not None:
                         column_names = [desc[0] for desc in cur.description]
-                        results = [dict(zip(column_names, row)) for row in rows]
+                        original_results = [dict(zip(column_names, row)) for row in rows]
                     else:
                         # This should never happen after a successful execute, but satisfies type checker
-                        results = [list(row) for row in rows]
+                        original_results = [list(row) for row in rows]
                     
-                    if results == []:
-                        results = [{"message": "Query didn't return any results. Try get_indicator_metadata to see available\
+                    if original_results == []:
+                        original_results = [{"message": "Query didn't return any original_results. Try get_indicator_metadata to see available\
                                      indicators and groupings for each indicator"}]
-                    results.append({'used_query': safe_query})
+                    original_results.append({'used_query': safe_query})
                     
-                    formatted_results = json.dumps(results, indent=2, default=str)
+                    if len(original_results) > 10:
+
+                        import csv
+                        import io
+                        # Extract query
+                        used_query = next(item['used_query'] for item in original_results if 'used_query' in item)
+
+                        # Filter actual rows
+                        rows = [item for item in original_results if 'used_query' not in item]
+
+                        # Convert to CSV string
+                        output = io.StringIO()
+                        writer = csv.DictWriter(output, fieldnames=rows[0].keys())
+                        writer.writeheader()
+                        writer.writerows(rows)
+
+                        csv_string = output.getvalue()
+
+                        results = {
+                            'data': csv_string,
+                            'used_query': used_query
+                        }
+                    else:
+                        results = original_results
+
+
+                    formatted_results = json.dumps(results, indent=2, default=str, ensure_ascii=False)
+                    print(formatted_results)
+
+                    if len(original_results) > 20:
+                        import pandas as pd
+                        df = pd.read_csv(io.StringIO(csv_string))
+                        md = df.to_markdown(index=False)
+
+                        return f"__SHOW_TABLE__\n{md}"
 
                     # Step 3: Emit success message with results
                     await emitter.emit(
@@ -799,7 +834,7 @@ async def test_tool():
 
     # Test queries
     test_queries = [
-        "proporción de hogares victimizados por delitos violentos en la región de Tarapacá durante julio de 2023",
+        "tasa de desempleo mensual 2021 con mes y año para cada género",
         "What categories do we have?",
         "Show me products with their categories",
         "How many orders are there?",
@@ -807,8 +842,8 @@ async def test_tool():
 
     for query in test_queries:
         print(f"\n--- Testing: {query} ---")
-        res1 = await tool.get_indicator_metadata(indicator_name=None)
-        #result = await tool.execute_query(query)
+        #res1 = await tool.get_indicator_metadata(indicator_name=None)
+        result = await tool.execute_query(query)
         print(result)
 
 

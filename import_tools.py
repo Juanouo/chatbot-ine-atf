@@ -205,6 +205,101 @@ def import_tools_from_json(json_file_path, db_path):
         logger.error("Error importing tools: %s", e)
         return False
 
+def import_functions_from_json(json_file_path, db_path):
+    """
+    Import filter/pipe functions from JSON export file into Open WebUI database.
+
+    :param json_file_path: Path to the functions export JSON file
+    :param db_path: Path to the Open WebUI database file
+    """
+    logger.info("Starting function import from %s", json_file_path)
+
+    if not os.path.exists(json_file_path):
+        logger.error("JSON file not found: %s", json_file_path)
+        return False
+
+    try:
+        with open(json_file_path, 'r') as f:
+            functions_data = json.load(f)
+        logger.info("Loaded %d functions from JSON file", len(functions_data))
+    except Exception as e:
+        logger.error("Error reading JSON file: %s", e)
+        return False
+
+    if not wait_for_db(db_path):
+        return False
+
+    try:
+        with sqlite3.connect(db_path, timeout=30.0) as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='function';")
+            if not cursor.fetchone():
+                logger.error("Function table does not exist in database")
+                return False
+
+            imported_count = 0
+            updated_count = 0
+
+            for func in functions_data:
+                func_id = func.get('id')
+                if not func_id:
+                    logger.warning("Skipping function without ID")
+                    continue
+
+                cursor.execute("SELECT id FROM function WHERE id = ?", (func_id,))
+                existing = cursor.fetchone()
+
+                if existing:
+                    cursor.execute("""
+                        UPDATE function
+                        SET name = ?, type = ?, content = ?, meta = ?, valves = ?,
+                            is_active = ?, is_global = ?, updated_at = ?
+                        WHERE id = ?
+                    """, (
+                        func.get('name'),
+                        func.get('type'),
+                        func.get('content'),
+                        json.dumps(func.get('meta', {})),
+                        json.dumps(func.get('valves')) if func.get('valves') else None,
+                        1 if func.get('is_active', True) else 0,
+                        1 if func.get('is_global', True) else 0,
+                        func.get('updated_at'),
+                        func_id
+                    ))
+                    updated_count += 1
+                    logger.info("Updated function: %s", func.get('name', func_id))
+                else:
+                    cursor.execute("""
+                        INSERT INTO function (id, user_id, name, type, content, meta, valves,
+                                             is_active, is_global, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        func_id,
+                        func.get('user_id'),
+                        func.get('name'),
+                        func.get('type'),
+                        func.get('content'),
+                        json.dumps(func.get('meta', {})),
+                        json.dumps(func.get('valves')) if func.get('valves') else None,
+                        1 if func.get('is_active', True) else 0,
+                        1 if func.get('is_global', True) else 0,
+                        func.get('created_at'),
+                        func.get('updated_at')
+                    ))
+                    imported_count += 1
+                    logger.info("Imported function: %s", func.get('name', func_id))
+
+            conn.commit()
+
+        logger.info("Function import completed! Imported: %d, Updated: %d", imported_count, updated_count)
+        return True
+
+    except Exception as e:
+        logger.error("Error importing functions: %s", e)
+        return False
+
+
 def import_models_from_json(json_file_path, db_path, prompts_base_path="/app/", no_override_ids=None):
     """
     Import models from JSON export file into Open WebUI database.
@@ -540,6 +635,7 @@ if __name__ == "__main__":
     tools_json = "/app/exports/postgres-tool-export.json"
     models_json = "/app/exports/models-export.json"
     config_json = "/app/exports/config-export.json"
+    functions_json = "/app/exports/filter-export.json"
     db_file = "/app/backend/data/webui.db"
 
     # Override with command line arguments if provided
@@ -551,11 +647,13 @@ if __name__ == "__main__":
         config_json = sys.argv[3]
     if len(sys.argv) > 4:
         db_file = sys.argv[4]
+    if len(sys.argv) > 5:
+        functions_json = sys.argv[5]
 
     # Apply any missing schema migrations before importing
     apply_schema_migrations(db_file)
 
-    # Import tools, models, and config with delays to prevent database locks
+    # Import tools, models, config, and functions with delays to prevent database locks
     tools_success = import_tools_from_json(tools_json, db_file)
     time.sleep(1)  # Wait for database to release locks
 
@@ -565,10 +663,13 @@ if __name__ == "__main__":
     config_success, config_data = import_config_from_json(config_json, db_file)
     time.sleep(1)  # Wait for database to release locks
 
+    functions_success = import_functions_from_json(functions_json, db_file)
+    time.sleep(1)  # Wait for database to release locks
+
     # Update OpenAI config via API to refresh in-memory cache
     if config_success and config_data:
         update_openai_config_via_api(config_data, db_file)
 
     # Exit with success only if all imports succeeded
-    success = tools_success and models_success and config_success
+    success = tools_success and models_success and config_success and functions_success
     sys.exit(0 if success else 1)

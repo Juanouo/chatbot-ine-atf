@@ -45,9 +45,9 @@ echo "✅ Ollama service is ready!"
 # fi
 
 
-# Import tools, models, and config if the export files exist
-echo "🔧 Importing tools, models, and config from export files..."
-python3 /app/import_tools.py /app/exports/postgres-tool-export.json /app/exports/models-export.json /app/exports/config-export.json /app/backend/data/webui.db
+# Import tools, models, config, and filter functions if the export files exist
+echo "🔧 Importing tools, models, config, and filters from export files..."
+python3 /app/import_tools.py /app/exports/postgres-tool-export.json /app/exports/models-export.json /app/exports/config-export.json /app/backend/data/webui.db /app/exports/filter-export.json
 
 echo "✅ Open WebUI startup complete!"
 

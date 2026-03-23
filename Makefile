@@ -108,7 +108,7 @@ dev-down:
 
 dev-restart:
 	@echo "Restarting development environment..."
-	docker compose --profile dev down && docker compose --profile dev up -d
+	docker compose --profile dev down &&  python update_tools_export.py  && docker compose --profile dev up -d
 
 dev-rebuild:
 	@echo "Rebuilding and restarting development environment..."
