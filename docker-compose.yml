@@ -112,6 +112,7 @@ services:
       - ./exports/filter-export.json:/app/exports/filter-export.json:ro
       - ./import_tools.py:/app/import_tools.py:ro
       - ./start_with_tools.sh:/app/start_with_tools.sh:ro
+      - ./src:/app/backend/src:ro
       - ./system_prompt.md:/app/system_prompt.md:ro
       - ./hf_models:/app/backend/hf_models:ro
       - ./open-webui/backend/open_webui/config.py:/app/backend/open_webui/config.py
