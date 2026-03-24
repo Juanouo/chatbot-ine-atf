@@ -825,13 +825,16 @@ class Tools:
                                 df =  df.pivot(index="fecha", columns=group_col, values=value_col)
 
                             df = df.sort_values(by=['fecha'])
+                            df.columns = [f'{value_col}_{i}' for i in df.columns]
+                            if 'tasa' in value_col:
+                                df.apply(lambda x: x.astype(str) + '%' )
 
 
 
-                        md = df.to_markdown(index=False)
+                        md = df.to_markdown()
                         print(md)
 
-                        return f"__SHOW_TABLE__\n{md}"
+                        return f"query: {safe_query}\n\n__SHOW_TABLE__\n{md}"
 
                     # Step 3: Emit success message with results
                     await emitter.emit(
