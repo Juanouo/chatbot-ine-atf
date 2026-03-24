@@ -29,6 +29,8 @@ import os
 from pydantic import BaseModel, Field
 from typing import Literal
 
+from src.utils import extract_columns
+
 
 def validate_sql(sql_query: str, allowed_tables=None, max_limit=100) -> str:
     """
@@ -805,7 +807,29 @@ class Tools:
                     if len(original_results) > 20:
                         import pandas as pd
                         df = pd.read_csv(io.StringIO(csv_string))
+
+                        df = df.drop(columns=['fecha', 'indicador', 'grupo'], errors='ignore')
+
+                        group_col, value_col = extract_columns(safe_query)
+
+                        df[value_col] = df[value_col].astype(float).round(2)
+
+                        if 'año' in df.columns and 'mes' in df.columns:
+                            df['año'] = df['año'].astype(str)
+                            df['mes'] = df['mes'].astype(str).str.zfill(2)
+                            df['fecha'] = df['año'] + '-' + df['mes']
+                            df = df.drop(columns=['año', 'mes'], errors='ignore')
+
+                            if group_col:
+
+                                df =  df.pivot(index="fecha", columns=group_col, values=value_col)
+
+                            df = df.sort_values(by=['fecha'])
+
+
+
                         md = df.to_markdown(index=False)
+                        print(md)
 
                         return f"__SHOW_TABLE__\n{md}"
 
