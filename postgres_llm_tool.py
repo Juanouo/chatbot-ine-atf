@@ -1,7 +1,7 @@
 """
 title: Postgres Database Tool
 author: Juan Concha (adapted from Joshua Rudy)
-version: 0.0.2
+version: 0.3.1
 license: MIT
 description: A simple tool for interacting with a PostgreSQL database. Ask the model questions and it will take the request
 and pass it as an API call to OpenRouter to generate a SQL query before executing the query using psycopg2.
