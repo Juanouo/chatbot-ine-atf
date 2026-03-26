@@ -116,7 +116,7 @@ class Filter:
                     table_content = (
                         "Estos son los resultados encontrados:\n\n"
                         + table
-                        + "\n\n¿Quieres obtener información respecto a otro indicador?"
+                        + "\n\n Recuerda que en la esquina superior derecha de la tabla **tienes la opción de copiarla o descargarla**.\n\n ¿Quieres obtener información respecto a otro indicador?"
                     )
                     break
 
