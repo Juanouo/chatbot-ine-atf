@@ -32,19 +32,25 @@ with open('exports/postgres-tool-export.json', 'w') as f:
 
 print("✅ exports/postgres-tool-export.json updated successfully!")
 
-# --- Update filter function ---
-with open('table_display_filter.py', 'r') as f:
-    current_filter_content = f.read()
+# --- Update filter functions ---
+filters_dir = os.path.join(script_dir, 'filters')
 
 with open('exports/filter-export.json', 'r') as f:
     filter_export = json.load(f)
 
+filter_files = {
+    'table_display_filter': os.path.join(filters_dir, 'table_display_filter.py'),
+    'context_limit_filter': os.path.join(filters_dir, 'context_limit_filter.py'),
+}
+
 for func in filter_export:
-    if func['id'] == 'table_display_filter':
-        func['content'] = current_filter_content
+    func_id = func.get('id')
+    if func_id in filter_files:
+        with open(filter_files[func_id], 'r') as f:
+            func['content'] = f.read()
         func['updated_at'] = now
         print(f"Updated filter: {func['name']}")
-        break
+        del filter_files[func_id]  # mark as handled
 
 with open('exports/filter-export.json', 'w') as f:
     json.dump(filter_export, f, indent=2)
