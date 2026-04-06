@@ -53,6 +53,9 @@ def validate_sql(sql_query: str, allowed_tables=None, max_limit=100) -> str:
     sql = re.sub(
         r"<think>\n.*?</think>(\n+)?", "", sql, flags=re.DOTALL
     )  # remove <think>...</think> blocks
+    sql = re.sub(
+        r"^```(?:sql)?\s*\n?(.*?)\n?```$", r"\1", sql, flags=re.DOTALL
+    ).strip()  # remove ```sql ... ``` or ``` ... ``` wrappers
     print("DEBUG: Validating SQL query:")
     print(f"{sql=}")
     print("-----------------------------------------------")
@@ -165,9 +168,9 @@ class OpenRouterProvider:
         Raises:
             Exception: If API call fails
         """
-        prompt = prompt + '\nRespond ONLY with the SQL SELECT command, no additional text or formatting is permitted.'
+        prompt = prompt + '\nRespond ONLY with the SQL SELECT command, no additional text or formatting is permitted. This includes ```sql``` blocks. Never use them.'
         payload = {
-            "model": self.model,
+            "model": self.model + ':nitro', # nitro tira al proveedor más rápido
             "messages": [
                 {"role": "user", "content": prompt}
             ],
@@ -185,6 +188,7 @@ class OpenRouterProvider:
                     response.raise_for_status()
 
                     sql_query = ""
+                    thinking_chars = 0
                     async for line in response.aiter_lines():
                         # Skip empty lines
                         if not line.strip():
@@ -204,6 +208,12 @@ class OpenRouterProvider:
                             # Extract content from delta or message
                             if 'choices' in data and len(data['choices']) > 0:
                                 choice = data['choices'][0]
+
+                                # Count thinking/reasoning tokens (not captured in content)
+                                if 'delta' in choice and 'reasoning_content' in choice['delta']:
+                                    rc = choice['delta']['reasoning_content']
+                                    if rc:
+                                        thinking_chars += len(rc)
 
                                 # Try delta first (streaming)
                                 if 'delta' in choice and 'content' in choice['delta']:
@@ -225,6 +235,8 @@ class OpenRouterProvider:
                         except json.JSONDecodeError:
                             continue
 
+                    if thinking_chars > 0:
+                        print(f"DEBUG: Thinking tokens (chars): {thinking_chars}")
                     return sql_query
         except Exception as e:
             raise Exception(f"OpenRouter generation failed: {e}")
@@ -236,7 +248,7 @@ class Tools:
 
         # To give the user the choice between multiple strings, you can use Literal from typing:
         openrouter_model: Literal["qwen/qwen3-32b", "deepseek/deepseek-v3.2",
-                                  "openai/gpt-oss-120b"] = Field(
+                                  "openai/gpt-oss-120b", "google/gemma-3-27b-it"] = Field(
            default="openai/gpt-oss-120b",
            description="Modelo a utilizar para uso interno de herramientas",
        )
