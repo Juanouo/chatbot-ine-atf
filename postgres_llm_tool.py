@@ -18,6 +18,7 @@ Adapted for docker environment with:
 """
 
 import json
+import time
 
 from typing import Callable, Any
 import re
@@ -723,6 +724,7 @@ class Tools:
         :return: A string representation of the query results or an error message.
         """
         emitter = EventEmitter(__event_emitter__)
+        t0 = time.perf_counter()
 
         try:
             # Step 1: Generate the SQL command
@@ -734,6 +736,8 @@ class Tools:
             sql_query = await self.instruct_llm_to_generate_sql(
                 natural_language_query, __event_emitter__
             )
+            t1 = time.perf_counter()
+            print(f"PROFILE: LLM SQL generation = {t1 - t0:.3f}s")
             print(f"DEBUG: Generated SQL Query:\n{sql_query} -------------------------")
 
             if not sql_query:
@@ -747,6 +751,7 @@ class Tools:
 
             # Step 2: Execute the SQL command using DB config
             db_config = self.get_db_config()
+            t2 = time.perf_counter()
             with psycopg2.connect(
                 dbname=db_config["dbname"],
                 user=db_config["user"],
@@ -761,6 +766,8 @@ class Tools:
                     )
                     cur.execute(safe_query)
                     rows = cur.fetchall()
+                    t3 = time.perf_counter()
+                    print(f"PROFILE: DB connect + query = {t3 - t2:.3f}s")
 
                     # Get column names for formatting original_results
                     if cur.description is not None:
@@ -769,12 +776,12 @@ class Tools:
                     else:
                         # This should never happen after a successful execute, but satisfies type checker
                         original_results = [list(row) for row in rows]
-                    
+
                     if original_results == []:
                         original_results = [{"message": "Query didn't return any original_results. Try get_indicator_metadata to see available\
                                      indicators and groupings for each indicator"}]
                     original_results.append({'used_query': safe_query})
-                    
+
                     if len(original_results) > 10:
 
                         import csv
@@ -834,6 +841,9 @@ class Tools:
                         md = df.to_markdown()
                         print(md)
 
+                        t4 = time.perf_counter()
+                        print(f"PROFILE: formatting (pandas/markdown) = {t4 - t3:.3f}s")
+                        print(f"PROFILE: total = {t4 - t0:.3f}s")
                         return f"query: {safe_query}\n\n__SHOW_TABLE__\n{md}"
 
                     # Step 3: Emit success message with results
@@ -844,6 +854,9 @@ class Tools:
                         done=True,
                     )
 
+                    t4 = time.perf_counter()
+                    print(f"PROFILE: formatting (JSON) = {t4 - t3:.3f}s")
+                    print(f"PROFILE: total = {t4 - t0:.3f}s")
                     return formatted_results
 
         except Exception as e:

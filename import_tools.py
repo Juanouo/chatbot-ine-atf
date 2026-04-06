@@ -342,6 +342,11 @@ def import_models_from_json(json_file_path, db_path, prompts_base_path="/app/", 
                 logger.error("Model table does not exist in database")
                 return False
 
+            # Get fallback admin user_id for models missing one
+            cursor.execute("SELECT id FROM user WHERE role = 'admin' LIMIT 1")
+            admin_row = cursor.fetchone()
+            fallback_user_id = admin_row[0] if admin_row else None
+
             imported_count = 0
             updated_count = 0
             deleted_count = 0
@@ -377,6 +382,7 @@ def import_models_from_json(json_file_path, db_path, prompts_base_path="/app/", 
                 # Check if model already exists
                 cursor.execute("SELECT id FROM model WHERE id = ?", (model_id,))
                 exists = cursor.fetchone()
+                now = int(time.time())
 
                 if exists:
                     # Update existing model
@@ -390,7 +396,7 @@ def import_models_from_json(json_file_path, db_path, prompts_base_path="/app/", 
                         json.dumps(model.get('meta', {})),
                         json.dumps(model.get('params', {})),
                         json.dumps(model.get('access_control')) if model.get('access_control') is not None else None,
-                        model.get('updated_at'),
+                        model.get('updated_at') or now,
                         model.get('is_active', True),
                         model_id
                     ))
@@ -404,14 +410,14 @@ def import_models_from_json(json_file_path, db_path, prompts_base_path="/app/", 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
                         model_id,
-                        model.get('user_id'),
+                        model.get('user_id') or fallback_user_id,
                         model.get('base_model_id'),
                         model.get('name'),
                         json.dumps(model.get('meta', {})),
                         json.dumps(model.get('params', {})),
                         json.dumps(model.get('access_control')) if model.get('access_control') is not None else None,
-                        model.get('updated_at'),
-                        model.get('created_at'),
+                        model.get('updated_at') or now,
+                        model.get('created_at') or now,
                         model.get('is_active', True)
                     ))
                     imported_count += 1

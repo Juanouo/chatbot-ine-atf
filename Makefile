@@ -116,7 +116,7 @@ dev-rebuild:
 
 dev-logs:
 	@echo "Showing development logs (Ctrl+C to exit)..."
-	docker compose --profile dev logs -f
+	docker compose --profile dev logs -f | grep --line-buffered --color=always -E 'ERROR|$$'
 
 dev-shell:
 	@echo "Opening shell in development open-webui container..."
