@@ -169,6 +169,8 @@ class OpenRouterProvider:
             Exception: If API call fails
         """
         prompt = prompt + '\nRespond ONLY with the SQL SELECT command, no additional text or formatting is permitted. This includes ```sql``` blocks. Never use them.'
+        
+        print(f'DEBUG: using model {self.model} for SQL generation')
         payload = {
             "model": self.model + ':nitro', # nitro tira al proveedor más rápido
             "messages": [
