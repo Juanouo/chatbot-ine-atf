@@ -116,11 +116,11 @@
         "name": "gemma-4-31b",
         "owned_by": "openai",
         "openai": {
-            "id": "google/gemma-4-31b-it",
+            "id": "google/gemma-4-31b-it:nitro",
             "name": "google/gemma-4-31b-it",
             "owned_by": "openai",
             "openai": {
-                "id": "google/gemma-4-31b-it"
+                "id": "google/gemma-4-31b-it:nitro"
             },
             "urlIdx": 0,
             "connection_type": "external"

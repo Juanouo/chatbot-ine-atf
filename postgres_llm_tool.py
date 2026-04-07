@@ -374,6 +374,8 @@ class Tools:
                 "victimizacion_hogares_delitos_mayor_connotacion_social": "Victimización de hogares por delitos de mayor connotación social",
                 "victimizacion_hogares_delitos_violentos": "Victimización de hogares por delitos violentos",
                 "victimizacion_personas_delitos_violentos": "Victimización de personas por delitos violentos",
+                "ipc_variacion_12_meses": "Variación del Índice de Precios del Consumidor (12 meses)",
+                "ipc_variacion_mensual": "Variación del Índice de Precios del Consumidor (mensual)"
             }
 
             with psycopg2.connect(
@@ -529,12 +531,21 @@ class Tools:
                                                          "poblacion_edad_trabajar", "personas_desocupadas",
                                                          "personas_ocupadas",
                                                          "personas_edad_trabajar"]
+            
+            nombre_indicadores_seguridad = ["percepcion_aumento_delincuencia_pais",
+                "victimizacion_hogares_delitos_mayor_connotacion_social",
+                "victimizacion_hogares_delitos_violentos",
+                "victimizacion_personas_delitos_violentos"]
+            
+            nombre_indicadores_ipc = ["ipc_variacion_12_meses", "ipc_variacion_mensual"]
 
             # Group by category
             employment_indicators = [ind for ind in indicators_metadata
                                       if ind["name"] in nombre_indicadores_empleo]
             crime_indicators = [ind for ind in indicators_metadata
-                                if ind["name"] not in nombre_indicadores_empleo]
+                                if ind["name"] in nombre_indicadores_seguridad]
+            ipc_indicators = [ind for ind in indicators_metadata
+                              if ind["name"] in nombre_indicadores_ipc]
 
             if employment_indicators:
                 summary_lines.append("Employment Indicators (ENE):")
@@ -551,6 +562,17 @@ class Tools:
             if crime_indicators:
                 summary_lines.append("Crime/Security Indicators (ENUSC):")
                 for ind in crime_indicators:
+                    freqs = ", ".join(ind["time_coverage"]["frequencies"])
+                    grouping_types = [g["type"] for g in ind["groupings"]]
+                    summary_lines.append(
+                        f"  - {ind['name']}: {ind['description']}. "
+                        f"Data from {ind['time_coverage']['min_year']}-{ind['time_coverage']['max_year']}. "
+                        f"Available {freqs}. Groupings: {', '.join(grouping_types)}"
+                    )
+
+            if ipc_indicators:
+                summary_lines.append("Consumer Price Index Indicators (IPC):")
+                for ind in ipc_indicators:
                     freqs = ", ".join(ind["time_coverage"]["frequencies"])
                     grouping_types = [g["type"] for g in ind["groupings"]]
                     summary_lines.append(
@@ -600,13 +622,13 @@ class Tools:
             )
             return f"Error fetching indicator metadata: {e}"
 
-    async def instruct_llm_to_generate_sql(
+    async def _instruct_llm_to_generate_sql(
         self,
         natural_language_query: str,
         __event_emitter__: Callable[[dict], Any] | None = None,
     ) -> str:
         """
-        Generate an SQL query from a natural language query.
+        Internal helper: generate an SQL query from a natural language query.
 
         :param natural_language_query: The user's query in plain language.
         :param __event_emitter__: Event emitter for updates (optional).
@@ -657,6 +679,10 @@ class Tools:
         - victimizacion_hogares_delitos_violentos (household victimization - violent crimes)
         - victimizacion_personas_delitos_violentos (personal victimization - violent crimes)
 
+        Inflation Indicators (IPC):
+        - ipc_variacion_12_meses (CPI variation over 12 months)
+        - ipc_variacion_mensual (monthly CPI variation)
+
         CRITICAL SQL Patterns (you MUST use these exact patterns):
         - For national/total data: WHERE grupo = 'nacional' AND valor_grupo IS NULL
         - For sex-disaggregated data: WHERE grupo = 'sexo' AND valor_grupo IN ('hombre', 'mujer')
@@ -669,10 +695,14 @@ class Tools:
         - You might only use aggregating functions like SUM or COUNT to aggregate data for a year if you have only monthly data available.
         - When comparing groups, use appropriate WHERE conditions on grupo and valor_grupo
         - Remember that NULL values require IS NULL / IS NOT NULL operators
+        - Always include year and month (if applicable) with the query results to avoid ambiguity
+        - If the user asks an open question like "what was this month's inflation?" try to answer thoroughly.
+          In this case, you should answer both monthly inflation and yearly inflation, so the chances of the user being satisfied are highest.
 
         Available tables: {", ".join(ALLOWED_TABLES)}
         User Query: {natural_language_query}
 
+        IMPORTANT:
         Reply ONLY with the SQL SELECT command, no additional text is permitted.
         """
 
@@ -747,12 +777,7 @@ class Tools:
 
         try:
             # Step 1: Generate the SQL command
-            await emitter.emit(
-                description="Generando comando SQL a partir de la consulta en lenguaje natural...",
-                status="sql_generation_in_progress",
-                done=False,
-            )
-            sql_query = await self.instruct_llm_to_generate_sql(
+            sql_query = await self._instruct_llm_to_generate_sql(
                 natural_language_query, __event_emitter__
             )
             t1 = time.perf_counter()

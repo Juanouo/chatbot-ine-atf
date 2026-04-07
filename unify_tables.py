@@ -38,18 +38,24 @@ mapa_regiones = {v:k for k,v in mapa_regiones.items()}  # Reverse mapping for re
 # Get the directory where this script is located
 
 data_dir = Path('data/')
+intermediate_dir = data_dir / 'intermediate'
 
-df_enusc = pd.read_parquet('data/intermediate/enusc_unificado.parquet').drop(columns=['codigo_indicador'])
+df_enusc = pd.read_parquet(intermediate_dir / 'enusc_unificado.parquet').drop(columns=['codigo_indicador'])
 df_enusc['mes'] = np.nan
-df_ene = pd.read_parquet('data/intermediate/ene_unificado.parquet')
-
+df_ene = pd.read_parquet(intermediate_dir / 'ene_unificado.parquet')
 df_ene['indicador'] = df_ene['indicador'].replace({'fuerza_trabajo': 'personas_fuerza_trabajo',
                                                    'poblacion_edad_trabajar': 'personas_edad_trabajar'})
+
 indicadores = df_ene.indicador.value_counts().index
 indicadores_personas = indicadores[indicadores.str.contains('persona')]
 # Pasamos cifras a su valor completo
 df_ene.loc[df_ene.indicador.isin(indicadores_personas), 'valor_indicador'] = df_ene.loc[df_ene.indicador.isin(indicadores_personas), 'valor_indicador'] * 1000
-df_total = pd.concat([df_ene, df_enusc], ignore_index=True)
+
+df_ipc = pd.read_parquet(intermediate_dir / 'ipc_general.parquet')
+df_ipc.indicador = df_ipc.indicador.replace({'variacion_mensual': 'ipc_variacion_mensual',
+                                             'variacion_12_meses': 'ipc_variacion_12_meses'})
+
+df_total = pd.concat([df_ene, df_enusc, df_ipc], ignore_index=True)
 #df_total.grupo = df_total.grupo.replace('nacional', np.nan)
 df_total.valor_grupo = df_total.valor_grupo.replace('Total País', np.nan)
 df_total.valor_grupo = df_total.valor_grupo.replace('-', np.nan)
@@ -65,6 +71,7 @@ df_total.valor_indicador = np.where(
         np.round(v, 0)
     )
 )
+
 df_total.mes = df_total.mes.astype('Int32', errors='ignore')
 df_total.año = df_total.año.astype('Int32', errors='ignore')
 df_total.valor_indicador
