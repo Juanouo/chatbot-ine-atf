@@ -18,6 +18,7 @@ Adapted for docker environment with:
 """
 
 import json
+import logging
 import time
 
 from typing import Callable, Any
@@ -26,6 +27,12 @@ import httpx
 import asyncio
 import psycopg2
 import os
+
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 from pydantic import BaseModel, Field
 from typing import Literal
@@ -56,9 +63,7 @@ def validate_sql(sql_query: str, allowed_tables=None, max_limit=100) -> str:
     sql = re.sub(
         r"^```(?:sql)?\s*\n?(.*?)\n?```$", r"\1", sql, flags=re.DOTALL
     ).strip()  # remove ```sql ... ``` or ``` ... ``` wrappers
-    print("DEBUG: Validating SQL query:")
-    print(f"{sql=}")
-    print("-----------------------------------------------")
+    logger.debug("Validating SQL query: %s", sql)
     # Must start with SELECT
     if not sql.upper().startswith("SELECT"):
         raise ValueError("Only SELECT queries are allowed")
@@ -170,7 +175,7 @@ class OpenRouterProvider:
         """
         prompt = prompt + '\nRespond ONLY with the SQL SELECT command, no additional text or formatting is permitted. This includes ```sql``` blocks. Never use them.'
         
-        print(f'DEBUG: using model {self.model} for SQL generation')
+        logger.debug("Using model %s for SQL generation", self.model)
         payload = {
             "model": self.model + ':nitro', # nitro tira al proveedor más rápido
             "messages": [
@@ -238,7 +243,7 @@ class OpenRouterProvider:
                             continue
 
                     if thinking_chars > 0:
-                        print(f"DEBUG: Thinking tokens (chars): {thinking_chars}")
+                        logger.debug("Thinking tokens (chars): %d", thinking_chars)
                     return sql_query
         except Exception as e:
             raise Exception(f"OpenRouter generation failed: {e}")
@@ -751,8 +756,8 @@ class Tools:
                 natural_language_query, __event_emitter__
             )
             t1 = time.perf_counter()
-            print(f"PROFILE: LLM SQL generation = {t1 - t0:.3f}s")
-            print(f"DEBUG: Generated SQL Query:\n{sql_query} -------------------------")
+            logger.info("PROFILE LLM SQL generation=%.3fs", t1 - t0)
+            logger.debug("Generated SQL: %s", sql_query)
 
             if not sql_query:
                 raise ValueError("Generated SQL query is empty.")
@@ -781,7 +786,7 @@ class Tools:
                     cur.execute(safe_query)
                     rows = cur.fetchall()
                     t3 = time.perf_counter()
-                    print(f"PROFILE: DB connect + query = {t3 - t2:.3f}s")
+                    logger.info("PROFILE DB connect+query=%.3fs", t3 - t2)
 
                     # Get column names for formatting original_results
                     if cur.description is not None:
@@ -823,7 +828,7 @@ class Tools:
 
 
                     formatted_results = json.dumps(results, indent=2, default=str, ensure_ascii=False)
-                    print(formatted_results)
+                    logger.debug("Query results: %s", formatted_results)
 
                     if len(original_results) > 20:
                         import pandas as pd
@@ -853,11 +858,11 @@ class Tools:
 
 
                         md = df.to_markdown()
-                        print(md)
+                        logger.debug("Markdown table:\n%s", md)
 
                         t4 = time.perf_counter()
-                        print(f"PROFILE: formatting (pandas/markdown) = {t4 - t3:.3f}s")
-                        print(f"PROFILE: total = {t4 - t0:.3f}s")
+                        logger.info("PROFILE formatting (pandas/markdown)=%.3fs", t4 - t3)
+                        logger.info("PROFILE total=%.3fs", t4 - t0)
                         return f"query: {safe_query}\n\n__SHOW_TABLE__\n{md}"
 
                     # Step 3: Emit success message with results
@@ -869,8 +874,8 @@ class Tools:
                     )
 
                     t4 = time.perf_counter()
-                    print(f"PROFILE: formatting (JSON) = {t4 - t3:.3f}s")
-                    print(f"PROFILE: total = {t4 - t0:.3f}s")
+                    logger.info("PROFILE formatting (JSON)=%.3fs", t4 - t3)
+                    logger.info("PROFILE total=%.3fs", t4 - t0)
                     return formatted_results
 
         except Exception as e:
