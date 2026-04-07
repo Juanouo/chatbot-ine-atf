@@ -15,7 +15,7 @@ open-webui/
 .env*
 CLAUDE.md
 .webui_secret_key
-data/
+#data/
 ollama_models/
 legacy_data/
 notebooks/
