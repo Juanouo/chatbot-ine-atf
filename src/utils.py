@@ -35,5 +35,6 @@ def extract_columns(sql: str):
 
         if base_name == "valor_indicador":
             value_col = alias or base_name
+        
 
     return group_col, value_col

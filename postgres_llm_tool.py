@@ -28,6 +28,9 @@ import asyncio
 import psycopg2
 import os
 
+
+
+
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO").upper(),
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -36,8 +39,6 @@ logger = logging.getLogger(__name__)
 
 from pydantic import BaseModel, Field
 from typing import Literal
-
-from src.utils import extract_columns
 
 
 def validate_sql(sql_query: str, allowed_tables=None, max_limit=100) -> str:
@@ -93,9 +94,9 @@ def validate_sql(sql_query: str, allowed_tables=None, max_limit=100) -> str:
             if tbl not in allowed_tables:
                 raise ValueError(f"Querying table '{tbl}' is not allowed")
 
-    # Enforce LIMIT
-    if not re.search(r"\bLIMIT\b", sql, flags=re.IGNORECASE):
-        sql += f" LIMIT {max_limit}"
+    # Enforce LIMIT — always replace whatever the LLM wrote
+    sql = re.sub(r'\bLIMIT\s+\d+\b', '', sql, flags=re.IGNORECASE).rstrip()
+    sql += f" LIMIT {max_limit}"
 
     return sql
 
@@ -175,13 +176,16 @@ class OpenRouterProvider:
         """
         prompt = prompt + '\nRespond ONLY with the SQL SELECT command, no additional text or formatting is permitted. This includes ```sql``` blocks. Never use them.'
         
-        logger.debug("Using model %s for SQL generation", self.model)
+        is_gemini = self.model.startswith("google/gemini")
+        model_id = self.model 
+        logger.debug("Using model %s for SQL generation", model_id)
         payload = {
-            "model": self.model + ':nitro', # nitro tira al proveedor más rápido
+            "model": model_id,
             "messages": [
                 {"role": "user", "content": prompt}
             ],
-            "stream": True
+            "stream": True,
+            **({"reasoning": {"effort": "low"}} if is_gemini else {}),
         }
 
         try:
@@ -255,7 +259,8 @@ class Tools:
 
         # To give the user the choice between multiple strings, you can use Literal from typing:
         openrouter_model: Literal["qwen/qwen3-32b", "deepseek/deepseek-v3.2",
-                                  "openai/gpt-oss-120b", "google/gemma-3-27b-it"] = Field(
+                                  "openai/gpt-oss-120b", "google/gemma-3-27b-it",
+                                  "google/gemini-3.1-flash-lite-preview"] = Field(
            default="openai/gpt-oss-120b",
            description="Modelo a utilizar para uso interno de herramientas",
        )
@@ -287,47 +292,54 @@ class Tools:
         # Get host from environment variable (db-prod or db-dev), fallback to toy-postgres
         container_host = os.getenv("POSTGRES_HOST", "toy-postgres")
 
-        configs = [
-            {
+        config =             {
                 "dbname": "toydb",
                 "user": "readonly_user",
                 "password": "readonly_password",
                 "host": container_host,  # db-prod or db-dev from environment
                 "port": "5432",  # Internal container port
-            },
-            {
+            }
+        
+        try:
+            # Test connection
+            conn = psycopg2.connect(
+                dbname=config["dbname"],
+                user=config["user"],
+                password=config["password"],
+                host=config["host"],
+                port=config["port"],
+            )
+            conn.close()
+            return config
+        
+        
+        except Exception:
+                pass
+
+        fallback_configs = {
+
+            'prod': {
                 "dbname": "toydb",
                 "user": "readonly_user",
                 "password": "readonly_password",
                 "host": "localhost",  # External host
                 "port": "5438",  # Mapped port for prod
             },
-            {
+            'dev': {
                 "dbname": "toydb",
                 "user": "readonly_user",
                 "password": "readonly_password",
                 "host": "localhost",  # External host
                 "port": "5439",  # Mapped port for dev
             },
-        ]
+        }
 
-        for config in configs:
-            try:
-                # Test connection
-                conn = psycopg2.connect(
-                    dbname=config["dbname"],
-                    user=config["user"],
-                    password=config["password"],
-                    host=config["host"],
-                    port=config["port"],
-                )
-                conn.close()
-                return config
-            except Exception:
-                continue
+        config = fallback_configs.get(os.getenv("ENV", "dev"), fallback_configs['dev'])
+
+
 
         # If all fail, return the localhost config as default
-        return configs[1]
+        return config
 
     async def get_indicator_metadata(
         self,
@@ -687,17 +699,20 @@ class Tools:
         - For national/total data: WHERE grupo = 'nacional' AND valor_grupo IS NULL
         - For sex-disaggregated data: WHERE grupo = 'sexo' AND valor_grupo IN ('hombre', 'mujer')
         - For regional data: WHERE grupo = 'region' AND valor_grupo IN (region names like 'Metropolitana', 'Valparaíso', 'Biobío', etc.)
-        - For monthly data: WHERE frecuencia = 'mensual' AND mes IS NOT NULL
-        - For annual data: WHERE frecuencia = 'anual' AND mes IS NULL
+        - For inflation data data: WHERE indicador IN ('ipc_variacion_12_meses', 'ipc_variacion_mensual')
+
 
         Query Guidelines:
         - NEVER use = NULL or != NULL. ALWAYS use IS NULL or IS NOT NULL for NULL comparisons
         - You might only use aggregating functions like SUM or COUNT to aggregate data for a year if you have only monthly data available.
         - When comparing groups, use appropriate WHERE conditions on grupo and valor_grupo
-        - Remember that NULL values require IS NULL / IS NOT NULL operators
         - Always include year and month (if applicable) with the query results to avoid ambiguity
         - If the user asks an open question like "what was this month's inflation?" try to answer thoroughly.
-          In this case, you should answer both monthly inflation and yearly inflation, so the chances of the user being satisfied are highest.
+          In this case, you should answer both monthly inflation and yearly inflation, so the chances of the user being satisfied are highest. 
+        - If a user request requires getting more than one indicator, always try to get them in one query
+        - This is PostgreSQL, so use appropriate syntax and functions for that database. Example: never cast as UNSIGNED.
+        - You don't need to specify the `frecuencia` column when filtering, because an indicator never has both monthly and annual
+          data at the same time. Adding it only increases error vectors. 
 
         Available tables: {", ".join(ALLOWED_TABLES)}
         User Query: {natural_language_query}
@@ -774,7 +789,7 @@ class Tools:
         """
         emitter = EventEmitter(__event_emitter__)
         t0 = time.perf_counter()
-
+        logger.info("Using model %s for query execution", self.valves.openrouter_model)
         try:
             # Step 1: Generate the SQL command
             sql_query = await self._instruct_llm_to_generate_sql(
@@ -806,7 +821,7 @@ class Tools:
                 with conn.cursor() as cur:
                     # Use your database's allowed tables
                     safe_query = validate_sql(
-                        sql_query, allowed_tables=ALLOWED_TABLES, max_limit=100
+                        sql_query, allowed_tables=ALLOWED_TABLES, max_limit=500
                     )
                     cur.execute(safe_query)
                     rows = cur.fetchall()
@@ -858,29 +873,44 @@ class Tools:
                     if len(original_results) > 20:
                         import pandas as pd
                         df = pd.read_csv(io.StringIO(csv_string))
+                        df = df.drop(columns=['fecha', 'grupo'], errors='ignore')
 
-                        df = df.drop(columns=['fecha', 'indicador', 'grupo'], errors='ignore')
+                        if 'valor_indicador' in df.columns:
+                            df['valor_indicador'] = df['valor_indicador'].astype(float).round(2)
 
-                        group_col, value_col = extract_columns(safe_query)
-
-                        df[value_col] = df[value_col].astype(float).round(2)
-
-                        if 'año' in df.columns and 'mes' in df.columns:
-                            df['año'] = df['año'].astype(str)
-                            df['mes'] = df['mes'].astype(str).str.zfill(2)
-                            df['fecha'] = df['año'] + '-' + df['mes']
+                        if 'año' in df.columns:
+                            año_str = df['año'].astype(str)
+                            if 'mes' in df.columns and df['mes'].notna().any():
+                                mes_int = df['mes'].fillna(0).astype(int)
+                                df['fecha'] = año_str.where(
+                                    mes_int == 0,
+                                    año_str + '-' + mes_int.astype(str).str.zfill(2)
+                                )
+                            else:
+                                df['fecha'] = año_str
                             df = df.drop(columns=['año', 'mes'], errors='ignore')
 
-                            if group_col:
+                        multiple_indicators = (
+                            'indicador' in df.columns and df['indicador'].nunique() > 1
+                        )
+                        has_group = (
+                            'valor_grupo' in df.columns and df['valor_grupo'].notna().any()
+                        )
 
-                                df =  df.pivot(index="fecha", columns=group_col, values=value_col)
-
-                            df = df.sort_values(by=['fecha'])
-                            df.columns = [f'{value_col}_{i}' for i in df.columns]
-                            if 'tasa' in value_col:
-                                df.apply(lambda x: x.astype(str) + '%' )
-
-
+                        if 'fecha' in df.columns:
+                            if multiple_indicators and has_group:
+                                df['_col'] = df['indicador'] + ' / ' + df['valor_grupo'].fillna('total')
+                                df = df.pivot(index='fecha', columns='_col', values='valor_indicador')
+                            elif multiple_indicators:
+                                df = df.pivot(index='fecha', columns='indicador', values='valor_indicador')
+                            elif has_group:
+                                df = df.drop(columns=['indicador'], errors='ignore')
+                                df = df.pivot(index='fecha', columns='valor_grupo', values='valor_indicador')
+                            else:
+                                df = df.drop(columns=['indicador', 'valor_grupo'], errors='ignore')
+                                df = df.set_index('fecha')
+                            df.columns.name = None
+                            df = df.sort_index()
 
                         md = df.to_markdown()
                         logger.debug("Markdown table:\n%s", md)
@@ -913,12 +943,17 @@ class Tools:
 
 # Example usage function for testing
 async def test_tool():
+
+    from dotenv import load_dotenv
+    load_dotenv('.env-dev', override=True)  # Load development environment variables
+    print(f"Current environment: {os.getenv('ENV', 'not set')}")
+
     """Test the database tool with sample queries"""
     tool = Tools()
 
     # Test queries
     test_queries = [
-        "tasa de desempleo mensual 2021 con mes y año para cada género",
+        "variación del IPC en 12 meses y variación mensual del IPC durante 2023",
         "What categories do we have?",
         "Show me products with their categories",
         "How many orders are there?",

@@ -24,7 +24,8 @@
           "qwen/qwen3.5-9b",
           "openai/gpt-oss-120b",
           "deepseek/deepseek-v3.2",
-          "google/gemma-4-31b-it"
+          "google/gemma-4-31b-it",
+          "qwen/qwen3.5-27b"
         ],
         "connection_type": "external",
         "auth_type": "bearer"

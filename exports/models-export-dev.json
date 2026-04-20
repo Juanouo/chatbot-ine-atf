@@ -112,15 +112,15 @@
         "created_at": 1768940533
     },
     {
-        "id": "google/gemma-4-31b-it",
-        "name": "gemma-4-31b",
+        "id": "qwen/qwen3.5-27b",
+        "name": "qwen-3.5-27b",
         "owned_by": "openai",
         "openai": {
-            "id": "google/gemma-4-31b-it:nitro",
-            "name": "google/gemma-4-31b-it",
+            "id": "qwen/qwen3.5-27b:nitro",
+            "name": "qwen/qwen3.5-27b",
             "owned_by": "openai",
             "openai": {
-                "id": "google/gemma-4-31b-it:nitro"
+                "id": "qwen/qwen3.5-27b:nitro"
             },
             "urlIdx": 0,
             "connection_type": "external"
