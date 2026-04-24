@@ -68,6 +68,8 @@ class Filter:
         user_message = self._content_to_text(messages[last_user_idx].get("content"))
 
         tool_uses: dict[str, int] = {}
+        token_use: dict[str, int] = {}
+        cost = 0.0
         assistant_message = None
 
         for m in messages[last_user_idx + 1:]:
@@ -78,6 +80,18 @@ class Filter:
             if content:
                 for name in _TOOL_CALL_DETAILS_RE.findall(content):
                     tool_uses[name] = tool_uses.get(name, 0) + 1
+            usage = m.get("usage") or {}
+            if usage:
+                prompt = usage.get("prompt_tokens") or 0
+                completion = usage.get("completion_tokens") or 0
+                reasoning = ((usage.get("completion_tokens_details") or {}).get("reasoning_tokens")) or 0
+                token_use["input"] = token_use.get("input", 0) + prompt
+                token_use["thinking"] = token_use.get("thinking", 0) + reasoning
+                token_use["output"] = token_use.get("output", 0) + max(completion - reasoning, 0)
+                try:
+                    cost += float(usage.get("cost") or 0)
+                except (TypeError, ValueError):
+                    pass
 
         row = (
             metadata.get("chat_id"),
@@ -88,6 +102,8 @@ class Filter:
             user_message,
             assistant_message,
             json.dumps(tool_uses),
+            json.dumps(token_use),
+            cost,
         )
 
         conn = self._connect()
@@ -97,8 +113,8 @@ class Filter:
                     """
                     INSERT INTO chat_turn_log
                         (chat_id, message_id, user_id, user_name, model,
-                         user_message, assistant_message, tool_uses)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                         user_message, assistant_message, tool_uses, token_use, cost)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s)
                     ON CONFLICT (chat_id, message_id) DO NOTHING
                     """,
                     row,

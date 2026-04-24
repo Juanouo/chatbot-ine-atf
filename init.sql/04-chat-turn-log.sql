@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS chat_turn_log (
     user_message      TEXT,
     assistant_message TEXT,
     tool_uses         JSONB NOT NULL DEFAULT '{}'::jsonb,
+    token_use         JSONB NOT NULL DEFAULT '{}'::jsonb,
+    cost              NUMERIC(14, 8) NOT NULL DEFAULT 0,
     UNIQUE (chat_id, message_id)
 );
 
