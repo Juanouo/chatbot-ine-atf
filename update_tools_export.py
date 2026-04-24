@@ -41,6 +41,7 @@ with open('exports/filter-export.json', 'r') as f:
 filter_files = {
     'table_display_filter': os.path.join(filters_dir, 'table_display_filter.py'),
     'context_limit_filter': os.path.join(filters_dir, 'context_limit_filter.py'),
+    'turn_logger_filter': os.path.join(filters_dir, 'turn_logger_filter.py'),
 }
 
 for func in filter_export:
