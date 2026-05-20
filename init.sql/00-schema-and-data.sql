@@ -1,3 +1,10 @@
+-- Create application schemas
+CREATE SCHEMA IF NOT EXISTS data;   -- domain data (indicators)
+CREATE SCHEMA IF NOT EXISTS logs;   -- application telemetry
+
+GRANT USAGE, CREATE ON SCHEMA data TO toyuser;
+GRANT USAGE ON SCHEMA logs TO toyuser;
+
 -- -- Create tables
 -- CREATE TABLE users (
 --     id SERIAL PRIMARY KEY,

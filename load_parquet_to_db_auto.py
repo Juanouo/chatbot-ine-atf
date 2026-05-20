@@ -68,13 +68,13 @@ def load_parquet_file(parquet_file, table_name):
         connection_string = "postgresql://toyuser:toypass@localhost:5432/toydb"
         engine = create_engine(connection_string)
 
-        # Load data into PostgreSQL
-        print(f"💾 Loading data into table '{table_name}'...")
-        df.to_sql(table_name, engine, if_exists='replace', index=False, method='multi')
+        # Load data into PostgreSQL (data schema keeps domain tables separate from logs)
+        print(f"💾 Loading data into data.{table_name}...")
+        df.to_sql(table_name, engine, schema='data', if_exists='replace', index=False, method='multi')
 
-        # Grant permissions to readonly user
+        # readonly_user already has default privileges on data schema (see init.sql)
         with engine.connect() as conn:
-            conn.execute(text(f"GRANT SELECT ON {table_name} TO readonly_user"))
+            conn.execute(text(f"GRANT SELECT ON data.{table_name} TO readonly_user"))
             conn.commit()
 
         print(f"✅ Successfully loaded {len(df)} rows into table '{table_name}'")
