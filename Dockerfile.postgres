@@ -1,4 +1,4 @@
-FROM postgres:16
+FROM postgres:16.13
 
 # Install Python and required packages
 RUN apt-get update && apt-get install -y \
@@ -19,9 +19,9 @@ COPY load_parquet_data.sh /scripts/
 COPY init.sql/ /docker-entrypoint-initdb.d/
 
 # Make scripts executable
-RUN chmod +x /scripts/load_parquet_data.sh /docker-entrypoint-initdb.d/03-load-parquet.sh
+RUN chmod +x /scripts/load_parquet_data.sh \
+    /docker-entrypoint-initdb.d/01-create-readonly-user.sh \
+    /docker-entrypoint-initdb.d/03-load-parquet.sh
 
-# Set environment variables
-ENV POSTGRES_DB=toydb
-ENV POSTGRES_USER=toyuser
-ENV POSTGRES_PASSWORD=toypass
+# POSTGRES_DB / POSTGRES_USER / POSTGRES_PASSWORD / READONLY_PASSWORD
+# se inyectan via env_file (.env.prod / .env.dev) en compose — nunca hardcodear aqui.

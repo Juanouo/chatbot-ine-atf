@@ -21,6 +21,13 @@ TABLE_NAME_MAPPING = {
     "total_unificado.parquet": "total_unificado",
 }
 
+# Credenciales desde el entorno del contenedor postgres (inyectadas via env_file)
+DB_NAME = os.getenv("POSTGRES_DB", "toydb")
+DB_USER = os.getenv("POSTGRES_USER", "toyuser")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+if not DB_PASSWORD:
+    raise RuntimeError("POSTGRES_PASSWORD no está definida en el entorno (ver .env.prod / .env.dev)")
+
 def wait_for_db():
     """Wait for database to be ready"""
     max_retries = 30
@@ -29,9 +36,9 @@ def wait_for_db():
     while retry_count < max_retries:
         try:
             conn = psycopg2.connect(
-                dbname="toydb",
-                user="toyuser",
-                password="toypass",
+                dbname=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD,
                 host="localhost",
                 port="5432"
             )
@@ -65,7 +72,7 @@ def load_parquet_file(parquet_file, table_name):
         print(f"📊 Data shape: {df.shape} (rows, columns)")
 
         # Create database connection
-        connection_string = "postgresql://toyuser:toypass@localhost:5432/toydb"
+        connection_string = f"postgresql://{DB_USER}:{DB_PASSWORD}@localhost:5432/{DB_NAME}"
         engine = create_engine(connection_string)
 
         # Load data into PostgreSQL (data schema keeps domain tables separate from logs)

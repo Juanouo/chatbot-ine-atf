@@ -1,7 +1,7 @@
 {
   "version": 0,
   "ui": {
-    "enable_signup": true
+    "enable_signup": false
   },
   "openai": {
     "enable": true,

@@ -1,0 +1,125 @@
+# DESARROLLO — incluye Ollama para pruebas locales.
+# Credenciales en .env.dev (gitignored, chmod 600), distintas a prod.
+# Puertos de DB y Ollama solo en loopback. Red dev-net aislada de prod-net.
+name: chatbot-dev
+
+services:
+  ollama-dev:
+    # Pin por digest (equivale al ollama/ollama:latest corriendo al 2026-06-10)
+    image: ollama/ollama@sha256:a6149234667efc71d37766d61c1a16f24c33e4cd7a0bf4125c44a7e47e2419c4
+    container_name: ollama-dev
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:11435:11434"
+    volumes:
+      - ./ollama_models:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 12g
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - dev-net
+
+  open-webui-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.openwebui
+      target: dev
+    container_name: open-webui-dev
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "3031:8080"
+    volumes:
+      - open-webui-dev:/app/backend/data
+      # Mount configuration files for hot-reload on restart
+      - ./exports/postgres-tool-export.json:/app/exports/postgres-tool-export.json:ro
+      - ./exports/models-export-dev.json:/app/exports/models-export.json:ro
+      - ./exports/config-export-dev.json:/app/exports/config-export.json:ro
+      - ./exports/filter-export.json:/app/exports/filter-export.json:ro
+      - ./import_tools.py:/app/import_tools.py:ro
+      - ./start_with_tools.sh:/app/start_with_tools.sh:ro
+      - ./src:/app/backend/src:ro
+      - ./system_prompt.md:/app/system_prompt.md:ro
+      - ./hf_models:/app/backend/hf_models:ro
+      - ./open-webui/backend/open_webui/config.py:/app/backend/open_webui/config.py
+    restart: unless-stopped
+    depends_on:
+      db-dev:
+        condition: service_healthy
+      ollama-dev:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db-dev
+      POSTGRES_PORT: 5432
+      OLLAMA_BASE_URL: http://ollama-dev:11434
+    env_file:
+      - .env.dev
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4g
+    networks:
+      - dev-net
+
+  db-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    container_name: toy-postgres-dev
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    ports:
+      - "127.0.0.1:5439:5432"
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+      - ./data:/data:ro
+      - ./load_parquet_to_db_auto.py:/scripts/load_parquet_to_db_auto.py:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2g
+    networks:
+      - dev-net
+
+volumes:
+  # Nombres explícitos para conservar los volúmenes ya existentes
+  # (creados cuando el proyecto compose se llamaba "open-webui")
+  open-webui-dev:
+    name: open-webui_open-webui-dev
+  pgdata-dev:
+    name: open-webui_pgdata-dev
+
+networks:
+  dev-net:

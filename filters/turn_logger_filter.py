@@ -141,9 +141,10 @@ class Filter:
     @staticmethod
     def _connect():
         base = {
-            "dbname": "toydb",
+            "dbname": os.getenv("POSTGRES_DB", "toydb"),
             "user": os.getenv("POSTGRES_USER", "toyuser"),
-            "password": os.getenv("POSTGRES_PASSWORD", "toypass"),
+            # Sin fallback hardcodeado: la password viene del env_file (.env.prod / .env.dev)
+            "password": os.environ["POSTGRES_PASSWORD"],
         }
         container_host = os.getenv("POSTGRES_HOST", "toy-postgres")
         try:

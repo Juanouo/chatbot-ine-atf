@@ -1,0 +1,86 @@
+# PRODUCCION — sin Ollama (opera solo con OpenRouter).
+# Credenciales en .env.prod (gitignored, chmod 600).
+# Puertos publicados solo en loopback (127.0.0.1): el acceso externo debe pasar
+# por un reverse proxy con TLS (ver docs/respuesta-evaluacion.md — pendiente de
+# dominio/certificado institucional).
+name: chatbot-prod
+
+services:
+  open-webui-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.openwebui
+      target: prod
+    container_name: open-webui-prod
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:3030:8080"
+    volumes:
+      - open-webui-prod:/app/backend/data
+      - ./hf_models:/app/backend/hf_models:ro
+    restart: unless-stopped
+    depends_on:
+      db-prod:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db-prod
+      POSTGRES_PORT: 5432
+      ENABLE_OLLAMA_API: "False"
+      ENABLE_INITIAL_ADMIN_SIGNUP: "False"
+    env_file:
+      - .env.prod
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4g
+    networks:
+      - prod-net
+
+  db-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    container_name: toy-postgres-prod
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    ports:
+      - "127.0.0.1:5438:5432"
+    volumes:
+      - pgdata-prod:/var/lib/postgresql/data
+      - ./data:/data:ro
+      - ./load_parquet_to_db_auto.py:/scripts/load_parquet_to_db_auto.py:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2g
+    networks:
+      - prod-net
+
+volumes:
+  # Nombres explícitos para conservar los volúmenes ya existentes
+  # (creados cuando el proyecto compose se llamaba "open-webui")
+  open-webui-prod:
+    name: open-webui_open-webui-prod
+  pgdata-prod:
+    name: open-webui_pgdata-prod
+
+networks:
+  prod-net:

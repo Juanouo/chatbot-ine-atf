@@ -292,10 +292,18 @@ class Tools:
         # Get host from environment variable (db-prod or db-dev), fallback to toy-postgres
         container_host = os.getenv("POSTGRES_HOST", "toy-postgres")
 
+        # Password injected via env_file (.env.prod / .env.dev) — never hardcoded
+        readonly_password = os.getenv("READONLY_PASSWORD")
+        if not readonly_password:
+            raise ValueError(
+                "READONLY_PASSWORD environment variable is required "
+                "(define it in .env.prod / .env.dev)"
+            )
+
         config =             {
-                "dbname": "toydb",
+                "dbname": os.getenv("POSTGRES_DB", "toydb"),
                 "user": "readonly_user",
-                "password": "readonly_password",
+                "password": readonly_password,
                 "host": container_host,  # db-prod or db-dev from environment
                 "port": "5432",  # Internal container port
             }
@@ -319,16 +327,16 @@ class Tools:
         fallback_configs = {
 
             'prod': {
-                "dbname": "toydb",
+                "dbname": os.getenv("POSTGRES_DB", "toydb"),
                 "user": "readonly_user",
-                "password": "readonly_password",
+                "password": readonly_password,
                 "host": "localhost",  # External host
                 "port": "5438",  # Mapped port for prod
             },
             'dev': {
-                "dbname": "toydb",
+                "dbname": os.getenv("POSTGRES_DB", "toydb"),
                 "user": "readonly_user",
-                "password": "readonly_password",
+                "password": readonly_password,
                 "host": "localhost",  # External host
                 "port": "5439",  # Mapped port for dev
             },
@@ -945,7 +953,7 @@ class Tools:
 async def test_tool():
 
     from dotenv import load_dotenv
-    load_dotenv('.env-dev', override=True)  # Load development environment variables
+    load_dotenv('.env.dev', override=True)  # Load development environment variables
     print(f"Current environment: {os.getenv('ENV', 'not set')}")
 
     """Test the database tool with sample queries"""
