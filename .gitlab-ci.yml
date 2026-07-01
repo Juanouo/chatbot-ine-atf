@@ -13,7 +13,7 @@ dev-job:
     - cp "$SSH_PRIVATE_KEY_CHATBOT" ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
 
-    - ssh-keyscan -H ${SERVER_IP_CHATBOT} >> ~/.ssh/known_hosts
+    - ssh-keyscan -v -H ${SERVER_IP_CHATBOT} >> ~/.ssh/known_hosts
 
   script:
     - echo "Iniciando proceso Deploy dev..."
