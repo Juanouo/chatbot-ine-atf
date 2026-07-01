@@ -12,8 +12,8 @@ dev-job:
     - chmod 700 ~/.ssh
     - cp "$SSH_PRIVATE_KEY_CHATBOT" ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    - timeout 5 bash -c "cat < /dev/null > /dev/tcp/$SERVER_IP_CHATBOT/22" && echo "port 22 reachable" || echo "port 22 UNREACHABLE"
-    - ssh-keyscan -H "$SERVER_IP_CHATBOT" >> ~/.ssh/known_hosts
+
+    - ssh-keyscan -H ${SERVER_IP_CHATBOT} >> ~/.ssh/known_hosts
 
   script:
     - echo "Iniciando proceso Deploy dev..."
