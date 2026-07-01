@@ -12,8 +12,9 @@ dev-job:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh    
     - cp "$SSH_PRIVATE_KEY_CHATBOT" ~/.ssh/id_rsa
-    - echo "$SSH_PRIVATE_KEY_CHATBOT"
+
     - chmod 600 ~/.ssh/id_rsa   
+    - echo "$SERVER_IP_CHATBOT"
     # Agregar host a known_hosts
     - ssh-keyscan -H ${SERVER_IP_CHATBOT} >> ~/.ssh/known_hosts  
 
