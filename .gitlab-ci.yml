@@ -8,20 +8,12 @@ dev-job:
   before_script:
     - apt-get update -qq
     - apt-get install -y -qq openssh-client
-
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - cp "$SSH_PRIVATE_KEY_CHATBOT" ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-
     - echo "SERVER_IP_CHATBOT='$SERVER_IP_CHATBOT'"
-
-    # Debug
     - ssh-keyscan -v -H "$SERVER_IP_CHATBOT"; echo "Exit code: $?"
-
-    # Or, equivalently:
-    # - ssh-keyscan -v -H "$SERVER_IP_CHATBOT" || true
-
     # Add host to known_hosts
     - ssh-keyscan -H "$SERVER_IP_CHATBOT" >> ~/.ssh/known_hosts
 
