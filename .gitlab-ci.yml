@@ -13,7 +13,7 @@ dev-job:
     - cp "$SSH_PRIVATE_KEY_CHATBOT" ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - echo "SERVER_IP_CHATBOT='$SERVER_IP_CHATBOT'"
-    - 'ssh-keyscan -v -H "$SERVER_IP_CHATBOT"; echo "Exit code: $?"'
+    - 'ssh-keyscan -v -H "$SERVER_IP_CHATBOT" || echo "ssh-keyscan failed with exit code $?"'
     - ssh-keyscan -H "$SERVER_IP_CHATBOT" >> ~/.ssh/known_hosts
 
   script:
