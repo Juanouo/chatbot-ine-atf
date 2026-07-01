@@ -12,8 +12,7 @@ dev-job:
     - chmod 700 ~/.ssh
     - cp "$SSH_PRIVATE_KEY_CHATBOT" ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    - echo "SERVER_IP_CHATBOT='$SERVER_IP_CHATBOT'"
-    - 'ssh-keyscan -v -H "$SERVER_IP_CHATBOT" 2>&1 || echo "ssh-keyscan failed with exit code $?"'
+    - 'nc -zv -w5 "$SERVER_IP_CHATBOT" 22 2>&1 || echo "Cannot reach port 22"'
     - ssh-keyscan -H "$SERVER_IP_CHATBOT" >> ~/.ssh/known_hosts
 
   script:
