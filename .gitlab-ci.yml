@@ -12,17 +12,16 @@ dev-job:
     - chmod 700 ~/.ssh
     - cp "$SSH_PRIVATE_KEY_CHATBOT" ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-
-    - ssh-keyscan -v -H ${SERVER_IP_CHATBOT} >> ~/.ssh/known_hosts
+  #  - ssh-keyscan -v -H ${SERVER_IP_CHATBOT} >> ~/.ssh/known_hosts
 
   script:
     - echo "Iniciando proceso Deploy dev..."
     - cp "$ENV" .env
     # Test de conexión
-    - ssh ${USER_CHATBOT}@${SERVER_IP_CHATBOT} "echo '✓ Conexión exitosa'"
+    - ssh ${USER_CHATBOT}@${SERVER_IP_CHATBOT} -i ~/.ssh/id_rsa "echo '✓ Conexión exitosa'"
     - scp -r  * ${USER_CHATBOT}@${SERVER_IP_CHATBOT}:/home/openwebui-deploy
     - scp -r  .env ${USER_CHATBOT}@${SERVER_IP_CHATBOT}:/home/openwebui-deploy
-    - ssh  ${USER_CHATBOT}@${SERVER_IP_CHATBOT} "cd /home/openwebui-deploy && docker compose down -v && docker compose up -d --build" 
+    - ssh  ${USER_CHATBOT}@${SERVER_IP_CHATBOT} -i ~/.ssh/id_rsa "cd /home/openwebui-deploy && docker compose down -v && docker compose up -d --build" 
     - echo "desplegado versión desarrollo en chatbot ${SERVER_IP_CHATBOT}:3031"
   only:
     - dev  
