@@ -18,7 +18,7 @@ services:
       - "127.0.0.1:3030:8080"
     volumes:
       - open-webui-prod:/app/backend/data
-      - ./hf_models:/app/backend/hf_models:ro
+      #- ./hf_models:/app/backend/hf_models:ro
     restart: unless-stopped
     depends_on:
       db-prod:
