@@ -14,14 +14,18 @@ BACKEND_PID=$!
 echo "⏳ Waiting for Open WebUI to initialize..."
 sleep 10
 
-# Wait for Ollama to be ready
-OLLAMA_URL="${OLLAMA_BASE_URL:-http://ollama:11434}"
-echo "⏳ Waiting for Ollama service at ${OLLAMA_URL}..."
-until curl -sf "${OLLAMA_URL}/api/tags" > /dev/null 2>&1; do
-  echo "Ollama not ready yet, waiting..."
-  sleep 2
-done
-echo "✅ Ollama service is ready!"
+# Wait for Ollama to be ready (dev only — prod runs OpenRouter-only, no Ollama)
+if [ "$ENV" = "dev" ]; then
+  OLLAMA_URL="${OLLAMA_BASE_URL:-http://ollama:11434}"
+  echo "⏳ Waiting for Ollama service at ${OLLAMA_URL}..."
+  until curl -sf "${OLLAMA_URL}/api/tags" > /dev/null 2>&1; do
+    echo "Ollama not ready yet, waiting..."
+    sleep 2
+  done
+  echo "✅ Ollama service is ready!"
+else
+  echo "⏭️  Skipping Ollama wait (ENV=$ENV, OpenRouter-only)"
+fi
 
 # # Create custom model from Modelfile if it doesn't exist
 # MODEL_NAME="nemotron-3-nano-q3"

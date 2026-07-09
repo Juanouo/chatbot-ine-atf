@@ -49,12 +49,15 @@ testing-job:
     REMOTE_DIR: "/opt/open-webui-testing/compose"
   before_script:
     - apt-get update -qq
-    - apt-get install -y -qq openssh-client rsync
+    - apt-get install -y -qq openssh-client rsync python3
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - cp "$SSH_PRIVATE_KEY_TESTING" ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan -H ${SERVER_IP_TESTING} >> ~/.ssh/known_hosts
   script:
     - echo "Deploy a host de testing controlado (${SERVER_IP_TESTING})..."
+    # Regenera exports/*.json desde postgres_llm_tool.py + filters/ ANTES de sincronizar.
+    # (equivale a lo que 'make dev-restart' hace localmente; el wrapper NO lo hace)
+    - python3 update_tools_export.py
     # .env.prod viene de la variable protegida $ENV (NO del repo, está gitignored)
     - cp "$ENV" .env.prod && chmod 600 .env.prod
     # Sincroniza el contexto de build. Excluye:
