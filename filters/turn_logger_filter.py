@@ -45,8 +45,7 @@ class Filter:
     ) -> dict:
         if not self.valves.enabled:
             return body
-        if os.getenv("ENV", "dev") != "dev":
-            return body
+
         try:
             self._log_turn(body, __user__ or {}, __metadata__ or {})
         except Exception as e:
