@@ -63,7 +63,7 @@ prod-restart:
 
 prod-rebuild:
 	@echo "Rebuilding and restarting production environment..."
-	$(PROD_COMPOSE) up -d --build
+	python update_tools_export.py && $(PROD_COMPOSE) up -d --build
 
 prod-logs:
 	@echo "Showing production logs (Ctrl+C to exit)..."
@@ -114,7 +114,7 @@ dev-restart:
 
 dev-rebuild:
 	@echo "Rebuilding and restarting development environment..."
-	$(DEV_COMPOSE) up -d --build
+	python update_tools_export.py && $(DEV_COMPOSE) up -d --build
 
 dev-logs:
 	@echo "Showing development logs (Ctrl+C to exit)..."

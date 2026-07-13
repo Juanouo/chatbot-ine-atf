@@ -27,7 +27,7 @@ services:
       POSTGRES_HOST: db-prod
       POSTGRES_PORT: 5432
       ENABLE_OLLAMA_API: "False"
-      ENABLE_INITIAL_ADMIN_SIGNUP: "False"
+      ENABLE_INITIAL_ADMIN_SIGNUP: "True"
     env_file:
       - .env.prod
     healthcheck:

@@ -19,4 +19,10 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     ALTER DEFAULT PRIVILEGES IN SCHEMA data GRANT SELECT ON TABLES TO readonly_user;
     GRANT USAGE ON ALL SEQUENCES IN SCHEMA data TO readonly_user;
     ALTER DEFAULT PRIVILEGES IN SCHEMA data GRANT USAGE ON SEQUENCES TO readonly_user;
+
+    -- Unqualified table names must resolve for every user: the LLM tool queries
+    -- total_unificado (schema data) and the turn logger writes chat_turn_log
+    -- (schema logs). Schemas a user lacks USAGE on (e.g. logs for readonly_user)
+    -- are skipped silently, so this grants nothing by itself.
+    ALTER DATABASE ${POSTGRES_DB} SET search_path TO data, logs, public;
 EOSQL

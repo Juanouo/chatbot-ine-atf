@@ -153,7 +153,7 @@ Otras piezas dentro del mismo archivo:
 
 #### `update_tools_export.py` — el empaquetador
 
-Script corto y sin misterio: lee `postgres_llm_tool.py` y lo mete en el campo `content` de `exports/postgres-tool-export.json`; hace lo mismo con cada archivo de `filters/` hacia `exports/filter-export.json`, actualizando timestamps. **`make dev-restart` lo ejecuta automáticamente**; solo necesitas correrlo a mano si vas a hacer `make prod-rebuild` sin haber pasado por un `dev-restart` antes (mala idea de todos modos: prueba en dev primero).
+Script corto y sin misterio: lee `postgres_llm_tool.py` y lo mete en el campo `content` de `exports/postgres-tool-export.json`; hace lo mismo con cada archivo de `filters/` hacia `exports/filter-export.json`. **Lo ejecutan automáticamente `make dev-restart`, `make dev-rebuild` y `make prod-rebuild`**, así que en la práctica nunca necesitas correrlo a mano. Es idempotente: solo reescribe los JSON (y actualiza timestamps) cuando el código fuente realmente cambió, de modo que ejecutarlo en un repositorio sincronizado no ensucia el árbol de git.
 
 #### `import_tools.py` — el importador
 
@@ -230,7 +230,8 @@ make dev-restart
 
 # 4. Prueba en http://localhost:3031 con preguntas reales
 
-# 5. Cuando estés conforme, despliega a prod:
+# 5. Cuando estés conforme, despliega a prod
+#    (también regenera los exports antes de construir la imagen):
 make prod-rebuild
 ```
 
@@ -414,6 +415,7 @@ FROM logs.chat_turn_log ORDER BY ts DESC LIMIT 20;
 | La herramienta responde `Forbidden keyword detected` u `Only SELECT queries are allowed` | `validate_sql` rechazó el SQL generado | Suele bastar reformular la pregunta; si es recurrente, ajusta el prompt de `_instruct_llm_to_generate_sql()` |
 | `Error de API: 401` / `402` en la herramienta | Clave de OpenRouter inválida o sin créditos | Revisa la clave en `.env.*` y los créditos en openrouter.ai |
 | La herramienta no conecta a la base | Password o contenedor caído | `make status`; revisa `READONLY_PASSWORD`; ¿rotaste passwords sin `rotate-passwords`? |
+| En logs de postgres: `relation "total_unificado" does not exist` | Volumen creado con una versión antigua de `init.sql` que no fijaba el `search_path` (la tabla vive en el esquema `data`) | `docker exec toy-postgres-{env} psql -U toyuser -d toydb -c "ALTER DATABASE toydb SET search_path TO data, logs, public;"` — aplica a las conexiones nuevas de inmediato |
 | El indicador nuevo "no existe" según el chatbot | Falta en `system_prompt.md` o en las listas de la herramienta | Completa el checklist de la receta 4.5 |
 | Pregunté por datos y responde que no hay | Los datos no están cargados en ese entorno | Receta 4.4, paso de verificación con `db-shell` |
 
