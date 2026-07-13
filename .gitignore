@@ -1,5 +1,6 @@
 # Python-generated files
 __pycache__/
+openwebui-v0.8.9.tar.gz
 *.py[oc]
 build/
 dist/

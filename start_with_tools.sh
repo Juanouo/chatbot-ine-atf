@@ -2,7 +2,34 @@
 set -e
 
 echo "🚀 Starting Open WebUI with automatic tool import..."
-echo "Running in $ENV" 
+echo "Running in $ENV"
+
+# Stage the config BEFORE starting the backend: Open WebUI's config.py imports
+# DATA_DIR/config.json into the DB at startup (before building its in-memory
+# config) and renames it to old_config.json. This replaces the old post-startup
+# DB write + /openai/config/update API call.
+if [ -f /app/exports/config-export.json ]; then
+  echo "📋 Staging config.json for Open WebUI's native import..."
+  python3 - <<'EOF' || echo "⚠️  Config staging failed; continuing with existing DB config"
+import json
+import sys
+
+sys.path.insert(0, "/app")
+from import_tools import substitute_env_vars
+
+SRC = "/app/exports/config-export.json"
+DST = "/app/backend/data/config.json"
+
+with open(SRC) as f:
+    config = json.load(f)
+
+with open(DST, "w") as f:
+    json.dump(substitute_env_vars(config), f, indent=2)
+
+print(f"Config staged: {SRC} -> {DST}")
+EOF
+fi
+
 # Start Open WebUI in the background
 echo "📦 Starting Open WebUI backend..."
 /app/backend/start.sh &
@@ -49,9 +76,14 @@ fi
 # fi
 
 
-# Import tools, models, config, and filter functions if the export files exist
-echo "🔧 Importing tools, models, config, and filters from export files..."
-python3 /app/import_tools.py /app/exports/postgres-tool-export.json /app/exports/models-export.json /app/exports/config-export.json /app/backend/data/webui.db /app/exports/filter-export.json
+# Import tools, models, and filter functions if the export files exist
+# (config is no longer imported here — it was staged as config.json above)
+echo "🔧 Importing tools, models, and filters from export files..."
+python3 /app/import_tools.py /app/exports/postgres-tool-export.json /app/exports/models-export.json /app/backend/data/webui.db /app/exports/filter-export.json
+
+# The native import renamed config.json to old_config.json; remove it so the
+# substituted API key doesn't linger in a plaintext file inside the volume.
+rm -f /app/backend/data/old_config.json
 
 echo "✅ Open WebUI startup complete!"
 

@@ -1,5 +1,7 @@
 # OpenAI Model Filter on Startup
 
+> **⚠️ SUPERSEDED (julio 2026):** El mecanismo descrito aquí (escritura a la DB + llamada a `/openai/config/update` con JWT) fue reemplazado por el import nativo de Open WebUI: `start_with_tools.sh` ahora deja el config (con `${VARS}` sustituidas) en `/app/backend/data/config.json` **antes** de arrancar el backend, y Open WebUI lo importa él mismo al inicio (lo renombra a `old_config.json`, que el script luego borra). `update_openai_config_via_api()` e `import_config_from_json()` fueron eliminadas de `import_tools.py`. La edición de `model_ids` en `exports/config-export-*.json` sigue funcionando igual. Este documento se conserva como referencia histórica del problema de caché en memoria.
+
 This document explains how to limit the models shown in Open WebUI to a specific list when using OpenRouter (or other OpenAI-compatible providers).
 
 ## Problem

@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
 Open WebUI Tool and Model Importer
-Imports tools and models from JSON export files into the Open WebUI database during container startup.
+Imports tools, models, and filter functions from JSON export files into the
+Open WebUI database during container startup.
+
+Note: the global config (config-export.json) is NOT imported here. It is staged
+by start_with_tools.sh as DATA_DIR/config.json before the backend starts, and
+Open WebUI imports it natively at startup (see config.py upstream).
 """
 
 import json
@@ -455,181 +460,6 @@ def substitute_env_vars(obj):
     else:
         return obj
 
-def update_openai_config_via_api(config_data, db_path, base_url="http://localhost:8080", secret_key_dir="/app/backend"):
-    """
-    Update OpenAI config via the Open WebUI API.
-    This ensures the in-memory config cache is refreshed.
-
-    :param config_data: The full config dict (with openai section)
-    :param db_path: Path to the Open WebUI database file
-    :param base_url: Open WebUI base URL
-    :param secret_key_dir: Directory containing .webui_secret_key file
-    """
-    import uuid
-    import requests
-
-    openai_config = config_data.get('openai', {})
-    if not openai_config:
-        logger.warning("No OpenAI config found, skipping API update")
-        return True
-
-    logger.info("Updating OpenAI config via API...")
-
-    try:
-        with sqlite3.connect(db_path, timeout=30.0) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT id FROM user WHERE role = 'admin' LIMIT 1")
-            admin_row = cursor.fetchone()
-
-        if not admin_row:
-            logger.warning("No admin user found, skipping API update")
-            return True
-
-        admin_id = admin_row[0]
-
-        # Read WEBUI_SECRET_KEY from file
-        secret_key_path = os.path.join(secret_key_dir, ".webui_secret_key")
-        if not os.path.exists(secret_key_path):
-            logger.warning("Secret key file not found: %s", secret_key_path)
-            return False
-
-        with open(secret_key_path, 'r') as f:
-            webui_secret_key = f.read().strip()
-
-        # Generate a JWT token for the admin user
-        import jwt
-        from datetime import datetime, timedelta, timezone
-
-        payload = {
-            "id": admin_id,
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
-            "jti": str(uuid.uuid4())
-        }
-        token = jwt.encode(payload, webui_secret_key, algorithm="HS256")
-        logger.info("Generated JWT token for admin user")
-
-        # Prepare the API request
-        api_configs = openai_config.get('api_configs', {})
-        api_base_urls = openai_config.get('api_base_urls', [])
-        api_keys = openai_config.get('api_keys', [])
-        enable_openai = openai_config.get('enable', True)
-
-        payload = {
-            "ENABLE_OPENAI_API": enable_openai,
-            "OPENAI_API_BASE_URLS": api_base_urls,
-            "OPENAI_API_KEYS": api_keys,
-            "OPENAI_API_CONFIGS": api_configs
-        }
-
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
-
-        # Wait for the API to be ready
-        max_retries = 30
-        for i in range(max_retries):
-            try:
-                response = requests.get(f"{base_url}/health", timeout=5)
-                if response.status_code == 200:
-                    break
-            except requests.exceptions.RequestException:
-                pass
-            logger.info("Waiting for API to be ready... (%d/%d)", i + 1, max_retries)
-            time.sleep(2)
-
-        # Make the API call
-        response = requests.post(
-            f"{base_url}/openai/config/update",
-            json=payload,
-            headers=headers,
-            timeout=30
-        )
-
-        if response.status_code == 200:
-            logger.info("OpenAI config updated via API successfully")
-            return True
-        else:
-            logger.warning("API call returned status %d: %s", response.status_code, response.text)
-            return False
-
-    except Exception as e:
-        logger.exception("Error updating OpenAI config via API: %s", e)
-        return False
-
-
-def import_config_from_json(json_file_path, db_path):
-    """
-    Import config from JSON export file into Open WebUI database.
-    Supports environment variable substitution for sensitive values like API keys.
-
-    :param json_file_path: Path to the config export JSON file
-    :param db_path: Path to the Open WebUI database file
-    :return: Tuple of (success, config_data) where config_data is the loaded config
-    """
-    logger.info("Starting config import from %s", json_file_path)
-
-    # Check if JSON file exists
-    if not os.path.exists(json_file_path):
-        logger.error("JSON file not found: %s", json_file_path)
-        return False, None
-
-    # Load config from JSON file
-    try:
-        with open(json_file_path, 'r') as f:
-            config_data = json.load(f)
-        logger.info("Loaded config from JSON file")
-    except Exception as e:
-        logger.error("Error reading JSON file: %s", e)
-        return False, None
-
-    # Substitute environment variables
-    config_data = substitute_env_vars(config_data)
-
-    # Wait for database to be available
-    if not wait_for_db(db_path):
-        return False, None
-
-    # Connect to database and import config
-    try:
-        with sqlite3.connect(db_path, timeout=30.0) as conn:
-            cursor = conn.cursor()
-
-            # Check if config table exists
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='config';")
-            if not cursor.fetchone():
-                logger.error("Config table does not exist in database")
-                return False, None
-
-            # Check if config row exists (id=1)
-            cursor.execute("SELECT id FROM config WHERE id = 1")
-            exists = cursor.fetchone()
-
-            config_json = json.dumps(config_data)
-
-            if exists:
-                # Update existing config
-                cursor.execute("""
-                    UPDATE config
-                    SET data = ?, updated_at = CURRENT_TIMESTAMP
-                    WHERE id = 1
-                """, (config_json,))
-                logger.info("Updated existing config")
-            else:
-                # Insert new config
-                cursor.execute("""
-                    INSERT INTO config (id, data, version, created_at, updated_at)
-                    VALUES (1, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                """, (config_json,))
-                logger.info("Imported new config")
-
-        logger.info("Config import completed!")
-        return True, config_data
-
-    except Exception as e:
-        logger.error("Error importing config: %s", e)
-        return False, None
-
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
@@ -638,9 +468,10 @@ if __name__ == "__main__":
     )
 
     # Default paths
+    # (config is NOT imported here: start_with_tools.sh stages it as
+    #  DATA_DIR/config.json before startup and Open WebUI imports it natively)
     tools_json = "/app/exports/postgres-tool-export.json"
     models_json = "/app/exports/models-export.json"
-    config_json = "/app/exports/config-export.json"
     functions_json = "/app/exports/filter-export.json"
     db_file = "/app/backend/data/webui.db"
 
@@ -650,32 +481,22 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         models_json = sys.argv[2]
     if len(sys.argv) > 3:
-        config_json = sys.argv[3]
+        db_file = sys.argv[3]
     if len(sys.argv) > 4:
-        db_file = sys.argv[4]
-    if len(sys.argv) > 5:
-        functions_json = sys.argv[5]
+        functions_json = sys.argv[4]
 
     # Apply any missing schema migrations before importing
     apply_schema_migrations(db_file)
 
-    # Import tools, models, config, and functions with delays to prevent database locks
+    # Import tools, models, and functions with delays to prevent database locks
     tools_success = import_tools_from_json(tools_json, db_file)
     time.sleep(1)  # Wait for database to release locks
 
     models_success = import_models_from_json(models_json, db_file)
     time.sleep(1)  # Wait for database to release locks
 
-    config_success, config_data = import_config_from_json(config_json, db_file)
-    time.sleep(1)  # Wait for database to release locks
-
     functions_success = import_functions_from_json(functions_json, db_file)
-    time.sleep(1)  # Wait for database to release locks
-
-    # Update OpenAI config via API to refresh in-memory cache
-    if config_success and config_data:
-        update_openai_config_via_api(config_data, db_file)
 
     # Exit with success only if all imports succeeded
-    success = tools_success and models_success and config_success and functions_success
+    success = tools_success and models_success and functions_success
     sys.exit(0 if success else 1)

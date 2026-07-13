@@ -56,7 +56,6 @@ services:
       - ./src:/app/backend/src:ro
       - ./system_prompt.md:/app/system_prompt.md:ro
       - ./hf_models:/app/backend/hf_models:ro
-      - ./open-webui/backend/open_webui/config.py:/app/backend/open_webui/config.py
     restart: unless-stopped
     depends_on:
       db-dev:
