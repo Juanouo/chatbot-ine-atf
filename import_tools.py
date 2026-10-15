@@ -350,7 +350,8 @@ def import_models_from_json(json_file_path, db_path, prompts_base_path="/app/", 
             # Get fallback admin user_id for models missing one
             cursor.execute("SELECT id FROM user WHERE role = 'admin' LIMIT 1")
             admin_row = cursor.fetchone()
-            fallback_user_id = admin_row[0] if admin_row else None
+            # Fresh DB (nobody signed up yet): user_id is NOT NULL, use a placeholder owner
+            fallback_user_id = admin_row[0] if admin_row else "system"
 
             imported_count = 0
             updated_count = 0

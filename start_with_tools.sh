@@ -41,18 +41,6 @@ BACKEND_PID=$!
 echo "⏳ Waiting for Open WebUI to initialize..."
 sleep 10
 
-# Wait for Ollama to be ready (dev only — prod runs OpenRouter-only, no Ollama)
-if [ "$ENV" = "dev" ]; then
-  OLLAMA_URL="${OLLAMA_BASE_URL:-http://ollama:11434}"
-  echo "⏳ Waiting for Ollama service at ${OLLAMA_URL}..."
-  until curl -sf "${OLLAMA_URL}/api/tags" > /dev/null 2>&1; do
-    echo "Ollama not ready yet, waiting..."
-    sleep 2
-  done
-  echo "✅ Ollama service is ready!"
-else
-  echo "⏭️  Skipping Ollama wait (ENV=$ENV, OpenRouter-only)"
-fi
 
 # # Create custom model from Modelfile if it doesn't exist
 # MODEL_NAME="nemotron-3-nano-q3"
@@ -79,7 +67,8 @@ fi
 # Import tools, models, and filter functions if the export files exist
 # (config is no longer imported here — it was staged as config.json above)
 echo "🔧 Importing tools, models, and filters from export files..."
-python3 /app/import_tools.py /app/exports/postgres-tool-export.json /app/exports/models-export.json /app/backend/data/webui.db /app/exports/filter-export.json
+python3 /app/import_tools.py /app/exports/postgres-tool-export.json /app/exports/models-export.json /app/backend/data/webui.db /app/exports/filter-export.json \
+  || echo "⚠️  Some imports failed; continuing so the backend stays up"
 
 # The native import renamed config.json to old_config.json; remove it so the
 # substituted API key doesn't linger in a plaintext file inside the volume.

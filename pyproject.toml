@@ -21,3 +21,8 @@ dependencies = [
 dev = [
     "mkdocs-material>=9.5",
 ]
+
+[tool.uv.workspace]
+members = [
+    "presentacion",
+]

@@ -72,7 +72,7 @@ def load_parquet_file(parquet_file, table_name):
         print(f"📊 Data shape: {df.shape} (rows, columns)")
 
         # Create database connection
-        connection_string = f"postgresql://{DB_USER}:{DB_PASSWORD}@localhost:5432/{DB_NAME}"
+        connection_string = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@localhost:5432/{DB_NAME}"
         engine = create_engine(connection_string)
 
         # Load data into PostgreSQL (data schema keeps domain tables separate from logs)

@@ -1,39 +1,8 @@
-# DESARROLLO — incluye Ollama para pruebas locales.
-# Credenciales en .env.dev (gitignored, chmod 600), distintas a prod.
-# Puertos de DB y Ollama solo en loopback. Red dev-net aislada de prod-net.
+# DESARROLLO / DEMO — solo OpenRouter (sin Ollama).
+# Credenciales en .env (gitignored). DB solo en loopback.
 name: chatbot-dev
 
 services:
-  ollama-dev:
-    # Pin por digest (equivale al ollama/ollama:latest corriendo al 2026-06-10)
-    image: ollama/ollama@sha256:a6149234667efc71d37766d61c1a16f24c33e4cd7a0bf4125c44a7e47e2419c4
-    container_name: ollama-dev
-    security_opt:
-      - no-new-privileges:true
-    ports:
-      - "127.0.0.1:11435:11434"
-    volumes:
-      - ./ollama_models:/root/.ollama
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    deploy:
-      resources:
-        limits:
-          cpus: "4"
-          memory: 12g
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    networks:
-      - dev-net
-
   open-webui-dev:
     build:
       context: .
@@ -60,14 +29,12 @@ services:
     depends_on:
       db-dev:
         condition: service_healthy
-      ollama-dev:
-        condition: service_healthy
     environment:
       POSTGRES_HOST: db-dev
       POSTGRES_PORT: 5432
-      OLLAMA_BASE_URL: http://ollama-dev:11434
+      ENABLE_OLLAMA_API: "false"
     env_file:
-      - .env.dev
+      - .env
     healthcheck:
       test: ["CMD", "curl", "--silent", "--fail", "http://localhost:8080/health"]
       interval: 30s
@@ -91,7 +58,7 @@ services:
       - no-new-privileges:true
     restart: unless-stopped
     env_file:
-      - .env.dev
+      - .env
     ports:
       - "127.0.0.1:5439:5432"
     volumes:

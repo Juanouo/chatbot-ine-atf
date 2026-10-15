@@ -1,0 +1,302 @@
+/* =========================
+   Defaults y variables
+   ========================= */
+.reveal section{
+  /* Altura completa del viewport slide */
+  height: 100%;
+  container-type: size;
+  position: relative;           /* Para posicionar el banner ::before */
+  display: block;               /* Deja que el flujo normal acomode los textos */
+  overflow: hidden;
+  --banner-h: clamp(72px, 15.5cqh, 210px);            /* Altura del banner en cqh (ajústalo a gusto) */
+  --aditional-margin: clamp(15px, 4cqh, 60px)
+}
+
+/* =========================
+   Portada: fondo imagen 1
+   ========================= */
+.reveal section.portada{
+  background-image: url("imagenes/background.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center 20%;
+
+  /* Layout robusto */
+  height: 100%;
+  container-type: size;
+  display: grid;
+  /* 1) una “respiración” arriba (no mueve nada por fuera),
+     2) fila del logo de alto controlado,
+     3) títulos y texto ocupan el resto */
+  grid-template-rows: var(--top-space) auto 1fr;
+  justify-items: center;
+  align-content: start;
+
+  /* Tokens responsivos con límites */
+  --top-space: clamp(20px, 3cqh, 56px);     /* respiro superior suave */
+  --v-gap: clamp(56px, 10svh, 140px);        /* separación entre logo y títulos */
+  --content-max: min(90cqw, 900px);        /* ancho seguro del bloque de texto */
+
+  row-gap: var(--v-gap);
+  /* padding-inline: clamp(32px, 8cqw, 96px);  márgenes laterales razonables */
+  padding-bottom: clamp(16px, 4svh, 64px);  /* respiro inferior */
+  text-align: center;
+}
+
+/* Logo: tamaño estable con límites (no depende del alto total del viewport) */
+.reveal section.portada .logo-box{
+  grid-row: 2;                    /* fila del logo */
+  justify-self: center;
+  display: grid;
+  place-items: end;
+
+  /* La caja del logo crece, pero con límites sanos */
+  max-inline-size: clamp(160px, 22cqw, 380px);
+  inline-size: 100%;
+  /* Alto del logo regulado por fuente vertical estable */
+  block-size: clamp(250px, 100svh, 590px);
+}
+
+.reveal section.portada .logo-box > img.portada-logo{
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Área de títulos y textos: no uses margin-top grandes */
+.reveal section.portada .title-area{
+  grid-row: 2;                    /* títulos van en la tercera fila */
+  max-inline-size: var(--content-max);
+  margin-inline: auto;
+  margin-top: 5svh;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: clamp(8px, 1.6svh, 20px);  /* respiración interna estable */
+  overflow: hidden;               /* seguridad visual */
+}
+
+/* Tipografías: adaptativas, sin márgenes verticales extra */
+.reveal section.portada .title-area h1{
+  font-size: clamp(3cqh, 5.5cqh, 7cqh);
+  line-height: 1.1;
+  margin: 0;
+  color: #fff;
+  text-wrap: balance;
+}
+.reveal section.portada .title-area h2{
+  font-size: clamp(2.2cqh, 3.6cqh, 5cqh);
+  line-height: 1.15;
+  margin: 0;
+  color: #fff;
+  text-wrap: balance;
+}
+.reveal section.portada .title-area p{
+  font-size: clamp(1.6cqh, 2.4cqh, 3.2cqh);
+  margin: 0;
+  color: #fff;
+}
+
+/* =========================
+   Resto de slides (no portada):
+   - Fondo imagen 2
+   - Banner superior con imagen 3
+   - Textos debajo del banner
+   ========================= */
+.reveal section:not(.portada){
+  /* Fondo por defecto */
+  background-image: url("imagenes/tipo1_bg.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  /* Layout en grid: Fila 1 = banner, Fila 2 = contenido */
+  display: grid;
+  grid-template-rows: var(--banner-h) 1fr;
+  row-gap: 0;
+
+  /* Tokens de contenido */
+  --content-max: min(90cqw, 1100px);        /* ancho máximo del bloque de texto */
+  --content-gap: clamp(6px, 1.2svh, 18px);  /* separación entre h1/h2/p */
+  --content-pad-i: clamp(16px, 4cqw, 48px); /* padding laterales */
+  --content-pad-b: clamp(16px, 4svh, 64px); /* padding inferior */
+
+  /* Sin padding-top: el grid ya reserva el alto del banner */
+  padding: 0 var(--content-pad-i) var(--content-pad-b);
+}
+
+/* Banner (capa encima del fondo y debajo del contenido) */
+.reveal section:not(.portada)::before{
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: var(--banner-h);
+  background-image: url("imagenes/tipo1_banner.png");
+  background-repeat: no-repeat;
+  background-size: cover;      /* usa 'contain' si el banner tiene transparencias laterales */
+  background-position: center top;
+  z-index: 1;                  /* por encima del fondo */
+  pointer-events: none;
+}
+
+/* Asegura que el contenido quede por encima del banner */
+.reveal section:not(.portada) > *{
+  position: relative;
+  top: calc(var(--banner-h) + var(--aditional-margin));
+  z-index: 2;
+}
+
+/* Contenedor de textos: fila 2 del grid, alineado y con ancho máximo */
+.reveal section:not(.portada) .title-area{
+  grid-row: 2;
+  max-inline-size: min(88cqw, 900px);
+  margin: 0;                      /* centra el bloque horizontalmente */
+  display: grid;
+  align-content: start;
+  justify-items: start;                /* ← textos alineados a la izquierda */
+  gap: var(--content-gap);
+  text-align: left;
+}
+
+/* =========================
+   Tipografías globales
+   (aplican a portada y no-portada)
+   ========================= */
+
+.reveal section h2{
+  font-size: clamp(3cqh, 5.5cqh, 7cqh);
+  line-height: 1.15;
+  margin: 0 0 0.8cqh 0;
+  color: #000;
+  text-wrap: balance;
+}
+.reveal section p{
+  font-size: clamp(1.6cqh, 3.4cqh, 3.2cqh);
+  margin: 0 0 1cqh 0;
+  color: #000;
+}
+
+
+.reveal .slides section .r-stretch{
+  /* que el elemento en sí se centre */
+  display: block;
+  margin: 0 auto;            /* centrado horizontal */
+  place-self: center;        /* si la slide usa grid/flex, centra también */
+
+  /* límites y escala */
+  max-width: 80%;
+  max-height: auto;
+  width: auto;
+  height: auto;
+}
+
+.reveal .slides section .r-stretch.narrow {
+    max-width: 60%; /* or whatever lower value you want */
+  }
+
+/* 2) Para imágenes y videos: que se VEAN centrados dentro de su caja */
+.reveal .slides section img.r-stretch,
+.reveal .slides section video.r-stretch{
+  object-fit: contain;       /* NO recorta (a diferencia de cover) */
+  object-position: 0 3svh;
+}
+
+/* 3) Para iframes con r-stretch (mapas, web, etc.) */
+.reveal .slides section iframe.r-stretch{
+  width: 70%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/*
+----------------------------------------------------------------------------------------------------
+Settings for text format
+----------------------------------------------------------------------------------------------------
+*/
+.icon {
+  vertical-align: middle;
+}
+
+.big-par { /*párrafo grande */
+  font-size: 60px;
+}
+
+.big-par-red { /*párrafo grande y rojo */
+  font-size: 60px;
+  color: #4a25db;
+}
+
+.biggest{ /*párrafo más grande */
+  font-size: 100px;
+  font-weight: bold;
+}
+
+
+.medium-par { /* párrafo mediano*/
+  font-size: 45px;
+}
+
+.medium-par-red { /* párrafo mediano*/
+  font-size: 45px;
+  color: #4a25db;
+}
+
+.small-par { /* párrafo pequeño*/
+  font-size: 30px !important;
+}
+
+.smaller-par { /* párrafo pequeño*/
+  font-size: 15px;
+}
+
+.pur { /* normal purpura*/
+  color: #4a25db;
+}
+
+/* Código fuente (chunk) */
+.reveal .cell .sourceCode pre,
+.reveal pre code,
+.reveal code {
+  font-size: 28px;   /* o 2.2cqh, 14px, etc. */
+  line-height: 1.4;
+}
+
+/* Salida de código (console / output) */
+.reveal .cell-output pre,
+.reveal .cell-output code {
+  font-size: 28px;
+  line-height: 1.4;
+}
+
+.align-right {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+  text-align: right;
+}
+
+.align-right img {
+  display: inline-block;
+  margin-left: auto;
+}
+
+.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+  text-align: center;
+}
+
+.align-center img {
+  display: inline-block;
+  margin-left: auto;
+}
+
+/* Slides with larger body text */
+.reveal section.larger-text li,
+.reveal section.larger-text p {
+  font-size: 3.5cqh;
+}
