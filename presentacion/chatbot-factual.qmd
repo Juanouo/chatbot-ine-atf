@@ -1,5 +1,7 @@
 ---
 pagetitle: "Presentacion"
+resources:
+  - imagenes/atf/atf_portada_bg.png   # referenced only from CSS, so quarto publish won't pick it up automatically
 format:
   revealjs:
     css: atf_quarto_style.css
