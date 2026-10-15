@@ -1,0 +1,432 @@
+/* =========================================================
+   Estilo ATF (Artefact) para Quarto revealjs
+   Basado en ATF_template.pptx (versión "White background"):
+   - Portada/cierre: degradé corporativo + "A" translúcida
+   - Slides de contenido: fondo blanco, banner degradé con título
+   - Tipografía Roboto, acentos en Artefact Pink
+   Tamaños en px: la slide lógica es fija (2560x1440, ver YAML)
+   ========================================================= */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap");
+
+:root{
+  /* Colores corporativos (guía gráfica ATF) */
+  --atf-blue:    #002244;   /* Artefact Blue */
+  --atf-pink:    #FF0066;   /* Artefact Pink */
+  --atf-dark:    #0D1634;   /* Dark Blue */
+  --atf-medium:  #273275;   /* Medium Blue */
+  --atf-purple:  #752E7D;   /* Purple */
+  --atf-grey-bg: #F2F2F2;
+  --atf-line:    #E3E9ED;
+  --atf-gradient: linear-gradient(90deg, #002244 0%, #273275 32%, #752E7D 67%, #FF0066 100%);
+
+  /* Variables de reveal */
+  --r-main-font: "Roboto", "Helvetica Neue", Arial, sans-serif;
+  --r-heading-font: "Roboto", "Helvetica Neue", Arial, sans-serif;
+  --r-main-color: var(--atf-blue);
+  --r-heading-color: var(--atf-blue);
+  --r-link-color: var(--atf-pink);
+  --r-link-color-hover: var(--atf-purple);
+  --r-background-color: #fff;
+}
+
+.reveal{
+  font-family: var(--r-main-font);
+  color: var(--atf-blue);
+}
+.reveal .slides{ text-align: left; }
+
+/* =========================
+   Defaults
+   ========================= */
+.reveal section{
+  height: 100%;
+  box-sizing: border-box;      /* el padding no debe agrandar la slide */
+  position: relative;
+  display: block;
+  overflow: hidden;
+  --banner-h: 216px;          /* alto del banner degradé (15% del alto) */
+  --aditional-margin: 56px;
+  --content-pad-i: 108px;
+  --content-pad-b: 120px;
+}
+
+/* =========================
+   Portada y cierre
+   ========================= */
+.reveal section.portada{
+  background: var(--atf-blue) url("imagenes/atf/atf_portada_bg.png") center / cover no-repeat;
+  padding: 160px 0 0 var(--content-pad-i);
+  text-align: left;
+}
+
+/* Quarto puede dejar un h2 vacío por el "## { .portada }" */
+.reveal section.portada > h2{ display: none; }
+
+.reveal section.portada .logo-box{
+  inline-size: clamp(240px, 717px, 760px);
+  margin: 0 0 216px 0;
+}
+.reveal section.portada .logo-box > img{
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  margin: 0;
+  max-height: none;
+}
+
+.reveal section.portada .title-area{
+  max-inline-size: 1587px;     /* deja libre la "A" a la derecha */
+  display: grid;
+  justify-items: start;
+  gap: clamp(8px, 29px, 32px);
+}
+.reveal section.portada .title-area h1{
+  font-size: 101px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+  color: #fff;
+  text-transform: none;
+  text-wrap: balance;
+}
+.reveal section.portada .title-area h2{
+  font-size: 60px;
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.2;
+  margin: 0;
+  color: #fff;
+  text-wrap: balance;
+}
+.reveal section.portada .title-area p{
+  font-size: 37px;
+  margin: 43px 0 0 0;
+  color: #fff;
+}
+/* Guion rosado sobre la fecha, como en la portada ATF */
+.reveal section.portada .title-area p::before{
+  content: "";
+  display: block;
+  inline-size: 2.4em;
+  block-size: 0.18em;
+  margin-bottom: 0.6em;
+  background: var(--atf-pink);
+}
+
+/* =========================
+   Slides de contenido
+   ========================= */
+.reveal section:not(.portada){
+  background: #fff;
+  padding: calc(var(--banner-h) + var(--aditional-margin)) var(--content-pad-i) var(--content-pad-b);
+}
+/* Deja ver el background-image de reveal (el fondo blanco lo taparía) */
+.reveal section:not(.portada)[data-background-image]{
+  background: transparent;
+}
+
+/* Banner degradé corporativo */
+.reveal section:not(.portada)::before{
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: var(--banner-h);
+  background: var(--atf-gradient);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Logo ARTEFACT abajo a la derecha */
+.reveal section:not(.portada)::after{
+  content: "";
+  position: absolute;
+  inset-inline-end: var(--content-pad-i);
+  inset-block-end: 43px;
+  inline-size: clamp(90px, 192px, 200px);
+  aspect-ratio: 1576 / 294;
+  background: url("imagenes/atf/atf_logo_azul.png") center / contain no-repeat;
+  pointer-events: none;
+}
+
+.reveal section:not(.portada) > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* Título de la slide: dentro del banner, blanco */
+.reveal section:not(.portada) > h2{
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: var(--banner-h);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--content-pad-i);
+  margin: 0;
+  font-size: 75px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: #fff;
+  text-transform: none;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+.reveal section:not(.portada) > h2 strong{ color: #fff; font-weight: 700; }
+
+/* =========================
+   Tipografías globales
+   ========================= */
+.reveal section h2{
+  font-family: var(--r-heading-font);
+  font-size: 75px;
+  line-height: 1.15;
+  margin: 0 0 12px 0;
+  color: var(--atf-blue);
+  text-transform: none;
+  text-wrap: balance;
+}
+.reveal section p,
+.reveal section li{
+  font-size: 42px;
+  line-height: 1.35;
+  color: var(--atf-blue);
+}
+.reveal section p{ margin: 0 0 23px 0; }
+
+.reveal strong{ font-weight: 700; color: var(--atf-pink); }
+.reveal section.portada strong{ color: #fff; }
+
+.reveal a{ color: var(--atf-pink); text-decoration: underline; text-underline-offset: 0.15em; }
+.reveal a:hover{ color: var(--atf-purple); }
+
+/* Viñetas: triángulo "A" rosado (nivel 1) y azul (nivel 2) */
+.reveal ul,
+.reveal ul ul,
+.reveal ul ul ul{
+  list-style: none;
+  margin: 0 0 23px 0;
+  padding-inline-start: 1.4em;
+}
+.reveal ul > li{
+  position: relative;
+  margin-block: 0.35em;
+}
+.reveal ul > li::before{
+  content: "";
+  position: absolute;
+  inset-inline-start: -1.25em;
+  top: 0.38em;
+  inline-size: 0.62em;
+  block-size: 0.52em;
+  background: var(--atf-pink);
+  clip-path: polygon(50% 0, 100% 100%, 78% 100%, 50% 42%, 22% 100%, 0 100%);
+}
+.reveal ul ul{ margin-block: 0.2em; margin-inline-start: 0; }
+.reveal ul ul > li{ font-size: 0.88em; margin-block: 0.25em; }
+/* Sub-viñetas: mismo triángulo, en azul (escala con el font-size menor) */
+.reveal ul ul > li::before{
+  background: var(--atf-medium);
+}
+.reveal ol{ padding-inline-start: 1.4em; }
+.reveal ol > li::marker{ color: var(--atf-pink); font-weight: 700; }
+
+/* Tablas al estilo ATF: cabecera azul, filas con línea suave */
+.reveal table{
+  border-collapse: collapse;
+  margin: 29px 0;
+  font-size: 39px;
+  inline-size: 100%;
+}
+.reveal table th{
+  background: var(--atf-blue);
+  color: #fff;
+  font-weight: 500;
+  text-align: left;
+  padding: 0.6em 0.9em;
+  border: none;
+}
+.reveal table td{
+  color: var(--atf-blue);
+  padding: 0.55em 0.9em;
+  border: none;
+  border-bottom: 1px solid var(--atf-line);
+}
+.reveal table tbody tr:nth-child(even) td{ background: var(--atf-grey-bg); }
+.reveal table tbody tr:last-child td{ border-bottom: 3px solid var(--atf-pink); }
+
+/* Número de slide: pequeño, abajo a la izquierda */
+.reveal .slide-number{
+  left: var(--content-pad-i, 48px);
+  right: auto;
+  bottom: 2.2%;
+  background: transparent;
+  color: var(--atf-blue);
+  font-family: var(--r-main-font);
+  font-size: 22px;
+}
+.reveal .slide-number a{ color: inherit; text-decoration: none; }
+
+/* Sin número en portada y cierre */
+.reveal:has(.slides > section.portada.present) .slide-number{ display: none; }
+
+/* Barra de progreso en rosado */
+.reveal .progress{ color: var(--atf-pink); }
+
+/* =========================
+   Imágenes
+   ========================= */
+.reveal .slides section .r-stretch{
+  display: block;
+  margin: 0 auto;
+  place-self: center;
+  max-width: 80%;
+  max-height: auto;
+  width: auto;
+  height: auto;
+}
+
+.reveal .slides section .r-stretch.narrow{
+  max-width: 60%;
+}
+
+.reveal .slides section img.r-stretch,
+.reveal .slides section video.r-stretch{
+  object-fit: contain;
+  object-position: 0 3svh;
+}
+
+.reveal .slides section iframe.r-stretch{
+  width: 70%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Imagen que llena el área de contenido. Alternativa a .r-stretch que sí
+   funciona con .fragment (reveal calcula mal el alto de .r-stretch con este tema) */
+.reveal .slides section img.fill-slide{
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
+  object-fit: contain;
+}
+.reveal .slides section p:has(> img.fill-slide){
+  height: 100%;
+  margin: 0;
+}
+
+/* Capturas y diagramas: borde fino como los recuadros ATF */
+/* (no aplica a .r-stretch: su caja es mayor que la imagen dibujada) */
+.reveal section:not(.portada) img:not(.icon):not(.r-stretch):not(.fill-slide):not([src$=".svg"]){
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px var(--atf-line), 0 12px 32px rgba(0, 34, 68, 0.12);
+}
+
+/*
+----------------------------------------------------------------------------------------------------
+Settings for text format
+----------------------------------------------------------------------------------------------------
+*/
+.icon {
+  vertical-align: middle;
+}
+
+.big-par { /*párrafo grande */
+  font-size: 60px;
+}
+
+.big-par-red { /*párrafo grande y destacado */
+  font-size: 60px;
+  color: var(--atf-pink);
+}
+
+.biggest{ /*párrafo más grande */
+  font-size: 100px;
+  font-weight: bold;
+}
+
+.medium-par { /* párrafo mediano*/
+  font-size: 45px;
+}
+
+.medium-par-red { /* párrafo mediano destacado */
+  font-size: 45px;
+  color: var(--atf-pink);
+}
+
+.small-par { /* párrafo pequeño*/
+  font-size: 30px !important;
+}
+
+.smaller-par { /* párrafo pequeño*/
+  font-size: 15px;
+}
+
+.pur { /* color de acento */
+  color: var(--atf-pink);
+}
+
+/* Código fuente (chunk) */
+.reveal .cell .sourceCode pre,
+.reveal pre code,
+.reveal code {
+  font-size: 28px;
+  line-height: 1.4;
+}
+.reveal code{ color: var(--atf-purple); }
+
+/* Salida de código (console / output) */
+.reveal .cell-output pre,
+.reveal .cell-output code {
+  font-size: 28px;
+  line-height: 1.4;
+}
+
+.align-right {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+  text-align: right;
+}
+
+.align-right img {
+  display: inline-block;
+  margin-left: auto;
+}
+
+.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+  text-align: center;
+}
+
+.align-center img {
+  display: inline-block;
+  margin-left: auto;
+}
+
+/* Listas incrementales: tamaño .medium-par (las sub-viñetas escalan con 0.88em) */
+.reveal section :where(.incremental > ul) > li{
+  font-size: 45px;
+}
+
+/* Slides with larger body text */
+.reveal section.larger-text li,
+.reveal section.larger-text p {
+  font-size: 52px;
+}
+
+/* Bloque de código alto (anula el max-height de 500px del tema reveal) */
+.reveal pre.sourceCode.tall-code code,
+.reveal .tall-code pre code {
+  max-height: 1050px;
+}
+
+.reveal pre.sourceCode.semi-tall-code code,
+.reveal .semi-tall-code pre code {
+  max-height: 850px;
+}
