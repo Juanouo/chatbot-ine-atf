@@ -735,7 +735,7 @@ Si confío en que puedo meter el output de la API en el prompt:
 
   - Para Claude Code a precio API (Claude ATF), el tiempo de reset del caché es de **5 minutos**. Es decir, cada vez que esperamos más de 5 minutos entre interacción e interacción **nos van a cobrar a 10-20x el precio** que nos hubieran cobrado de otra manera y nuestros limitados tokens sufren.
 
-    - P/e, Si tenemos 400k de contexto al mandar el mensaje con el caché frío, a 5 USD por millón de input (Opus 5.5), acabamos de regalar un 5% de nuestro uso mensual a Anthropic ( $400k/1M * 5USD = 2 USD$ ).
+    - P/e, Si tenemos 500k de contexto al mandar el mensaje con el caché frío, a 4 USD por millón de input (Opus 5.5), acabamos de regalar un 4% de nuestro uso mensual a Anthropic ( $500k/1M * 4USD = 2 USD$ ).
 
 :::
 
