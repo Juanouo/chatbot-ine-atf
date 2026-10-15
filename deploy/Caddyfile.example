@@ -1,0 +1,28 @@
+# Plantilla de reverse proxy con TLS para Open WebUI (prod).
+# PENDIENTE de información de TI: dominio institucional, certificado, y si existe
+# proxy/VPN institucional delante (ver docs/respuesta-evaluacion.md).
+#
+# Uso (una vez definido el dominio):
+#   docker run -d --name caddy --network host \
+#     -v $PWD/deploy/Caddyfile:/etc/caddy/Caddyfile \
+#     -v caddy_data:/data caddy:2.10
+#
+# open-webui-prod escucha solo en 127.0.0.1:3030, por lo que el único acceso
+# externo posible es a través de este proxy.
+
+# Opción A: dominio público con certificado automático (Let's Encrypt)
+# chatbot.institucion.cl {
+#     reverse_proxy 127.0.0.1:3030
+# }
+
+# Opción B: certificado institucional propio
+# chatbot.institucion.cl {
+#     tls /etc/caddy/certs/fullchain.pem /etc/caddy/certs/privkey.pem
+#     reverse_proxy 127.0.0.1:3030
+# }
+
+# Opción C: TLS interno autofirmado (solo para pruebas en red interna)
+# https://:8443 {
+#     tls internal
+#     reverse_proxy 127.0.0.1:3030
+# }

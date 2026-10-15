@@ -1,0 +1,32 @@
+FROM ghcr.io/open-webui/open-webui:v0.8.9 as base
+# Copy the import script, startup script, and export files
+COPY import_tools.py /app/import_tools.py
+COPY start_with_tools.sh /app/start_with_tools.sh
+COPY exports/ /app/exports/
+COPY src/ /app/backend/src/
+# Fuente única del system prompt para todos los modelos (dev lo monta encima via bind mount)
+COPY system_prompt.md /app/system_prompt.md
+
+# Make scripts executable
+RUN chmod +x /app/import_tools.py /app/start_with_tools.sh
+RUN pip install tabulate
+# ---------- prod ----------
+FROM base AS prod
+
+COPY exports/config-export-prod.json /app/exports/config-export.json
+COPY exports/models-export-prod.json /app/exports/models-export.json
+
+ENV ENV=prod
+
+CMD ["/app/start_with_tools.sh"]
+
+# ---------- dev ----------
+FROM base AS dev
+
+
+COPY exports/config-export-dev.json /app/exports/config-export.json
+
+ENV ENV=dev
+
+# Use our custom startup script
+CMD ["/app/start_with_tools.sh"]

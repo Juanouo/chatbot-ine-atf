@@ -1,0 +1,60 @@
+site_name: Chatbot Indicadores INE
+site_description: Guía para ejecutar el chatbot de estadísticas ENE/ENUSC localmente
+docs_dir: docs
+site_dir: site
+remote_name: github 
+
+theme:
+  name: material
+  language: es
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Cambiar a modo oscuro
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Cambiar a modo claro
+  features:
+    - content.tabs.link       # tabs stay in sync across the page
+    - content.code.copy       # copy button on code blocks
+    - navigation.tabs         # top-level nav as tabs
+    - navigation.sections
+    - navigation.top          # back-to-top button
+    - navigation.footer       # previous/next page links at bottom
+    - search.highlight
+    - search.suggest
+
+plugins:
+  - search:
+      lang: es
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Inicio: index.md
+  - Guía de instalación:
+    - Paso 1 — Instalar Docker: instalacion.md
+    - Paso 2 — Descargar el proyecto: archivos.md
+    - Paso 3 — Configurar la API: configuracion.md
+    - Paso 4 — Primera puesta en marcha: inicio.md
+    - Paso 5 — Usar el chatbot: uso.md
+  - Uso diario: diario.md
+  - Solución de problemas: problemas.md

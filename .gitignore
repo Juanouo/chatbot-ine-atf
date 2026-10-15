@@ -1,0 +1,28 @@
+# Python-generated files
+__pycache__/
+openwebui-v0.8.9.tar.gz
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+open-webui/
+pruebas/
+# Virtual environments
+.venv
+.vscode
+docs/
+open-webui/
+.env
+.env-dev
+.env.prod
+.env.dev
+CLAUDE.md
+.webui_secret_key
+#data/
+ollama_models/
+legacy_data/
+notebooks/
+hf_models/
+db.session.sql
+.github/

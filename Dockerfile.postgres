@@ -1,0 +1,27 @@
+FROM postgres:16.13
+
+# Install Python and required packages
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a virtual environment and install packages
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install pandas pyarrow psycopg2-binary sqlalchemy
+
+# Copy data and scripts
+COPY data/ /data/
+COPY load_parquet_to_db_auto.py /scripts/
+COPY load_parquet_data.sh /scripts/
+COPY init.sql/ /docker-entrypoint-initdb.d/
+
+# Make scripts executable
+RUN chmod +x /scripts/load_parquet_data.sh \
+    /docker-entrypoint-initdb.d/01-create-readonly-user.sh \
+    /docker-entrypoint-initdb.d/03-load-parquet.sh
+
+# POSTGRES_DB / POSTGRES_USER / POSTGRES_PASSWORD / READONLY_PASSWORD
+# se inyectan via env_file (.env.prod / .env.dev) en compose — nunca hardcodear aqui.

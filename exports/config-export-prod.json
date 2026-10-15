@@ -1,0 +1,33 @@
+{
+  "version": 0,
+  "ui": {
+    "enable_signup": false
+  },
+  "openai": {
+    "enable": true,
+    "api_base_urls": [
+
+      "https://openrouter.ai/api/v1"
+    ],
+    "api_keys": [
+      "${OPENAI_API_KEY}"
+
+    ],
+    "api_configs": {
+      
+      "0": {
+        "enable": true,
+        "tags": [],
+        "prefix_id": "",
+        "model_ids": [
+
+          "qwen/qwen3.5-35b-a3b",
+          "openai/gpt-oss-120b",
+          "deepseek/deepseek-v3.2"
+        ],
+        "connection_type": "external",
+        "auth_type": "bearer"
+      }
+    }
+  }
+}
