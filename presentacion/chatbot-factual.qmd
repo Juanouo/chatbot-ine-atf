@@ -30,16 +30,10 @@ format:
 
 - Motivación
 - Arquitectura
-- Cómo se ve
-<!--   - Open-WebUI -->
-<!--   - Ollama -->
-<!--   - PostgreSQL -->
-- Etapas del trabajo
 - Indicadores disponibles
-
+- Cómo se ve
+- Aprendizajes
 - Demostración en vivo
-- Qué nos falta
-<!-- - Próximos pasos -->
 
 
 ## Motivación { .larger-text }
