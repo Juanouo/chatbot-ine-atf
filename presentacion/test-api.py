@@ -4,10 +4,10 @@ import os
 import requests
 import pandas as pd
 from openai import OpenAI
-
+from dotenv import load_dotenv
 # Realizar la consulta GET para obtener datos de entrenamiento
 request = requests.get("https://rapps.ine.cl:9292/get_training_data?classification=ciuo")
-
+load_dotenv()
 # Obtener datos
 datos = request.json()
 
@@ -16,8 +16,8 @@ train = pd.DataFrame(datos['train'])
 
 test = pd.DataFrame(datos['test'])
 
-
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+
 OPENAI_API_BASE_URL = "https://openrouter.ai/api/v1"
 
 
