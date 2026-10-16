@@ -805,15 +805,15 @@ Aprendizajes
 <section id="aprendizaje-guardrails-fuera-de-la-nube" class="slide level2">
 <h2>Aprendizaje: guardrails fuera de la nube</h2>
 <ul>
-<li><p>La nube nos hace muy fácil manejar acceso con IAM, RBAC, etc.</p></li>
-<li><p>Fuera de la nube tenemos que ser más cuidadosos</p></li>
-<li><p>Buenas prácticas:</p>
+<li class="fragment"><p>La nube nos hace muy fácil manejar acceso con IAM, RBAC, etc.</p></li>
+<li class="fragment"><p>Fuera de la nube tenemos que ser más cuidadosos</p></li>
+<li class="fragment"><p>Buenas prácticas:</p>
 <ul>
-<li>Permisos limitados de base: cualquier agente en producción debería vivir en un sandbox o contenedor con el mínimo acceso posible para realizar sus tareas. Mucho cuidado con agentes que requieran capacidades destructivas.</li>
-<li>Capa clasificadora para todo tipo de mensajes indeseados (prompt injection/jailbreaking, extracción de system prompt, payaseos varios).</li>
-<li>Chatbot solo tiene acceso a usuario de solo lectura de la base de datos.</li>
-<li>Herramientas inspeccionan query generada y detectan palabras clave prohibidas (DELETE, INSERT, etc )</li>
-<li>Pegamos un LIMIT() a la query para evitar colapsar el contexto sin quererlo</li>
+<li class="fragment">Permisos limitados de base: cualquier agente en producción debería vivir en un sandbox o contenedor con el mínimo acceso posible para realizar sus tareas. Mucho cuidado con agentes que requieran capacidades destructivas.</li>
+<li class="fragment">Capa clasificadora para todo tipo de mensajes indeseados (prompt injection/jailbreaking, extracción de system prompt, payaseos varios).</li>
+<li class="fragment">Chatbot solo tiene acceso a usuario de solo lectura de la base de datos.</li>
+<li class="fragment">Herramientas inspeccionan query generada y detectan palabras clave prohibidas (DELETE, INSERT, etc )</li>
+<li class="fragment">Pegamos un LIMIT() a la query para evitar colapsar el contexto sin quererlo</li>
 </ul></li>
 </ul>
 <!-- ## Etapas del trabajo
