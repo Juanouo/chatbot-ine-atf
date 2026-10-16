@@ -370,7 +370,7 @@ Personas en la fuerza de trabajo, personas ocupadas, personas desocupadas,
 
 
 
-``` {.markdown .tall-code code-line-numbers="8,13,15-16"}
+``` {.markdown .tall-code code-line-numbers="6,13,15-16"}
 
 ## Available Tools
 
@@ -529,10 +529,6 @@ Una de las herramientas del chatbot es una función `validate_sql`, que recibe u
 
 ::::
 
-[Sobre el presupuesto de atención e ingeniería de contexto](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents){.small-par}
-
-[Harada et al (2025) -  When Instructions Multiply: Measuring and Estimating LLM Capabilities of Multiple Instructions Following](https://arxiv.org/pdf/2509.21051){.small-par}
-
 
 ## Subaprendizaje: maximizar lo determinístico
 
@@ -606,9 +602,6 @@ Una de las herramientas del chatbot es una función `validate_sql`, que recibe u
 
 ::::
 
-[Sobre el presupuesto de atención e ingeniería de contexto](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents){.small-par}
-
-[Harada et al (2025) -  When Instructions Multiply: Measuring and Estimating LLM Capabilities of Multiple Instructions Following](https://arxiv.org/pdf/2509.21051){.small-par}
 
 ## Subaprendizaje: maximizar lo determinístico
 
@@ -664,13 +657,13 @@ Si confío en que puedo meter el output de la API en el prompt:
 
 ::: fragment
 
-![](imagenes/ej-codigo-api.png){width=70%}
+![](imagenes/ej-codigo-api.png){width=50%}
 
 :::
 
 ::: fragment
 
-![](imagenes/ej-output-api.png){width=70%}
+![](imagenes/ej-output-api.png){width=55%}
 
 :::
 
@@ -791,6 +784,8 @@ Si confío en que puedo meter el output de la API en el prompt:
 
 ## Aprendizaje: guardrails fuera de la nube
 
+
+::: incremental
 - La nube nos hace muy fácil manejar acceso con IAM, RBAC, etc.
 
 - Fuera de la nube tenemos que ser más cuidadosos
@@ -802,7 +797,7 @@ Si confío en que puedo meter el output de la API en el prompt:
     - Herramientas inspeccionan query generada y detectan palabras clave prohibidas (DELETE, INSERT, etc ) 
     - Pegamos un LIMIT() a la query para evitar colapsar el contexto sin quererlo
 
-
+:::
 
 
 

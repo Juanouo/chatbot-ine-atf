@@ -5,22 +5,18 @@ import requests
 import pandas as pd
 from openai import OpenAI
 from dotenv import load_dotenv
-# Realizar la consulta GET para obtener datos de entrenamiento
-request = requests.get("https://rapps.ine.cl:9292/get_training_data?classification=ciuo")
 load_dotenv()
-# Obtener datos
-datos = request.json()
-
-# Convertir a DataFrames
-train = pd.DataFrame(datos['train'])
-
-test = pd.DataFrame(datos['test'])
-
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 OPENAI_API_BASE_URL = "https://openrouter.ai/api/v1"
 
 
+
+
+datos = requests.get("https://rapps.ine.cl:9292/get_training_data?classification=ciuo").json()
+# Convertir a DataFrames
+train = pd.DataFrame(datos['train'])
+test = pd.DataFrame(datos['test'])
 client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_API_BASE_URL)
 
 # Serializar train como CSV y armar el prompt
