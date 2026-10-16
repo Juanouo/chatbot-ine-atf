@@ -26,3 +26,4 @@ notebooks/
 hf_models/
 db.session.sql
 .github/
+.DS_Store

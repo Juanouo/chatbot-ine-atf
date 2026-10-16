@@ -29,6 +29,9 @@ format:
 ## Contenidos 
 
 - Motivación
+- Contexto institucional
+- Por qué acá
+- Solución
 - Arquitectura
 - Indicadores disponibles
 - Cómo se ve
@@ -197,7 +200,7 @@ que el código mismo solo pueda correrse **de forma segura**.
 
 :::  {.column width="50%}
 
-![](imagenes/owui_tool.png){width=70%}
+![](imagenes/tools.png){width=70%}
 :::
 
 ::::
@@ -326,10 +329,6 @@ Personas en la fuerza de trabajo, personas ocupadas, personas desocupadas,
 
 
 
-::: fragment
-[Anthropic sobre el tema: writing tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents)
-:::
-
 ## Subaprendizaje:  _progressive disclosure_ 
 
 :::: columns
@@ -423,8 +422,6 @@ Personas en la fuerza de trabajo, personas ocupadas, personas desocupadas,
 ::::
 
 
-[Anthropic sobre el tema: writing tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents)
-
 
 
 ## Subaprendizaje:  _progressive disclosure_ 
@@ -442,6 +439,9 @@ Personas en la fuerza de trabajo, personas ocupadas, personas desocupadas,
 
 - El espíritu de esto es que finalmente el agente tenga idealmente solo la información necesaria para trabajar, minimizando ruido innecesario.
 :::
+
+[Anthropic sobre el tema: writing tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents)
+
 
 ## Subaprendizaje: maximizar lo determinístico
 
