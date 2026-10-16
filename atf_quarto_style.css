@@ -120,10 +120,21 @@
   background: #fff;
   padding: calc(var(--banner-h) + var(--aditional-margin)) var(--content-pad-i) var(--content-pad-b);
 }
-/* Deja ver el background-image de reveal (el fondo blanco lo taparía) */
-.reveal section:not(.portada)[data-background-image]{
+/* Deja ver el background-image/color de reveal (el fondo blanco lo taparía) */
+.reveal section:not(.portada)[data-background-image],
+.reveal section:not(.portada)[data-background-color],
+.reveal section:not(.portada)[data-background-gradient]{
   background: transparent;
 }
+
+/* Contenedor de slides verticales (lo crea un "# Título"): sin fondo,
+   banner ni logo propios, o taparían el fondo de sus slides y duplicarían el logo */
+.reveal section.stack{
+  background: transparent;
+  padding: 0;
+}
+.reveal section.stack::before,
+.reveal section.stack::after{ content: none; }
 
 /* Banner degradé corporativo */
 .reveal section:not(.portada)::before{
@@ -266,6 +277,10 @@
   font-size: 22px;
 }
 .reveal .slide-number a{ color: inherit; text-decoration: none; }
+
+/* Slides con fondo oscuro (reveal agrega .has-dark-background): logo y número en blanco */
+.reveal section.has-dark-background:not(.portada)::after{ filter: brightness(0) invert(1); }
+.reveal:has(.slides section.has-dark-background:not(.portada).present) .slide-number{ color: #fff; }
 
 /* Sin número en portada y cierre */
 .reveal:has(.slides > section.portada.present) .slide-number{ display: none; }
