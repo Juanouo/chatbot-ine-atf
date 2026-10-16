@@ -1004,7 +1004,9 @@ Tenemos 11 indicadores de disponibles:
 
 Y si nos alcanzó el tiempo, ahora veremos [cómo funciona en la práctica](http://localhost:3031/)
 
+## Gracias! {background-color="#002244" background-gradient="linear-gradient(90deg, #002244 0%, #273275 32%, #752E7D 67%, #FF0066 100%)"}
 
+![](imagenes/cerebro.png)
 
 
 <!-- ## Próximos pasos -->
